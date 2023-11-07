@@ -19,39 +19,6 @@ head(df.calcs)
 ```
 
 
-
-```{r}
-cancer.lm <- lm(CANCER_CrudePrev ~ ., data = df.calcs)
-
-summary(cancer.lm)
-```
-
-
-
-```{r}
-kidney.lm <- lm(KIDNEY_CrudePrev ~., data = df.calcs)
-
-summary(kidney.lm)
-```
-
-
-```{r}
-cancer.interactions <- lm(CANCER_CrudePrev ~ .^2, data = df.calcs)
-summary(cancer.interactions)
-```
-
-```{r}
-back.model <-ols_step_backward_p(cancer.interactions, prem = 0.3, details=TRUE)
-summary(back.model$model)
-```
-
-
-
-
-```{r}
-summary(back.model$model)
-```
-
 ```{r}
 #narrowing the factors to only be unhealthy habits and preventative measures
 df.unhealthy.precitors <- df.calcs <- subset(df.calcs, select =- c(ARTHRITIS_CrudePrev, BPHIGH_CrudePrev, CASTHMA_CrudePrev, CHD_CrudePrev, COPD_CrudePrev, DIABETES_CrudePrev, HIGHCHOL_CrudePrev, KIDNEY_CrudePrev, MAMMOUSE_CrudePrev, MHLTH_CrudePrev, PHLTH_CrudePrev, STROKE_CrudePrev))
@@ -59,15 +26,136 @@ head(df.unhealthy.precitors)
 ```
 
 ```{r}
-cancer.pred.lm <- lm(CANCER_CrudePrev ~ . , data = df.unhealthy.precitors)
-summary(cancer.pred.lm)
+#narrowing the dataset even further to just predictive variables
+cancer.pred.only <- subset(df.unhealthy.precitors,  select =- c(BINGE_CrudePrev, CSMOKING_CrudePrev, LPA_CrudePrev, OBESITY_CrudePrev, SLEEP_CrudePrev))
+head(cancer.pred.only)
 ```
 
 ```{r}
-cancer.pred.reduced <- lm(CANCER_CrudePrev ~ ACCESS2_CrudePrev + BINGE_CrudePrev  + BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + CSMOKING_CrudePrev + DENTAL_CrudePrev + OBESITY_CrudePrev + PAPTEST_CrudePrev + SLEEP_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors)
-summary(cancer.pred.reduced)
-anova(cancer.pred.lm, cancer.pred.reduced)
+cancer.lm <- lm(CANCER_CrudePrev ~ ., data = cancer.pred.only)
+summary(cancer.lm)
 ```
+
+```{r}
+#removing ACCESS2_CrudePrev since not statistically significant
+cancer.reduced <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors)
+
+summary(cancer.reduced)
+
+anova(cancer.lm, cancer.reduced)
+
+
+```
+
+
+```{r}
+plot(cancer.reduced)
+?VIF
+
+```
+```{r}
+VIF(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
+
+
+```
+```{r}
+pairs(cancer.pred.only)
+```
+
+
+Given the ANOVA output, we can drop ACCESS2_CrudePrev. 
+
+
+```{r}
+cancer.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev)^2, data = df.unhealthy.precitors)
+
+summary(cancer.interactions)
+```
+
+
+```{r}
+model_step <- step(cancer.pred.only.interactions, direction = "both")
+
+```
+
+```{r}
+summary(model_step)
+```
+
+```{r}
+rounded_coefficients <- round(coefficients(model_step), 6)  # Round coefficients to 6 digits
+
+# Construct the formula with rounded coefficients
+formula_str <- paste0("y ~ ", 
+                     round(rounded_coefficients[1], 6), 
+                     "", 
+                     paste(sprintf(" %+.6f*%s ", 
+                                   rounded_coefficients[-1], 
+                                   names(rounded_coefficients[-1])), 
+                           collapse="")
+                     )
+
+# Convert the formula string into a formula object
+formula_with_rounded_coefficients <- as.formula(formula_str)
+
+# Print the formula
+print(formula_with_rounded_coefficients)
+```
+
+```{r}
+#linearity assumption
+library(ggplot2)
+ggplot(model_step, aes(x=.fitted, y=.resid)) +
+geom_point() + geom_smooth()+
+geom_hline(yintercept = 0)
+```
+
+
+```{r}
+plot(model_step)
+
+```
+
+
+```{r}
+library(MASS)
+bc = boxcox(model_step,lambda=seq(-1,1))
+
+cancer.pred.new = cancer.pred.only %>%
+  mutate(CANCER_boxcox = (CANCER_CrudePrev^lambda - 1)/lambda)
+
+head(cancer.pred.new)
+```
+
+
+```{r}
+new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + 
+    CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + 
+    COREW_CrudePrev + DENTAL_CrudePrev + PAPTEST_CrudePrev + 
+    TEETHLOST_CrudePrev + BPMED_CrudePrev:CHECKUP_CrudePrev + 
+    BPMED_CrudePrev:CHOLSCREEN_CrudePrev + BPMED_CrudePrev:COLON_SCREEN_CrudePrev + 
+    BPMED_CrudePrev:COREM_CrudePrev + BPMED_CrudePrev:COREW_CrudePrev + 
+    BPMED_CrudePrev:PAPTEST_CrudePrev + BPMED_CrudePrev:TEETHLOST_CrudePrev + 
+    CHECKUP_CrudePrev:CHOLSCREEN_CrudePrev + CHECKUP_CrudePrev:COLON_SCREEN_CrudePrev + 
+    CHECKUP_CrudePrev:COREM_CrudePrev + CHECKUP_CrudePrev:DENTAL_CrudePrev + 
+    CHECKUP_CrudePrev:PAPTEST_CrudePrev + CHECKUP_CrudePrev:TEETHLOST_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COLON_SCREEN_CrudePrev + CHOLSCREEN_CrudePrev:COREM_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COREW_CrudePrev + CHOLSCREEN_CrudePrev:DENTAL_CrudePrev + 
+    CHOLSCREEN_CrudePrev:PAPTEST_CrudePrev + CHOLSCREEN_CrudePrev:TEETHLOST_CrudePrev + 
+    COLON_SCREEN_CrudePrev:COREW_CrudePrev + COLON_SCREEN_CrudePrev:DENTAL_CrudePrev + 
+    COLON_SCREEN_CrudePrev:PAPTEST_CrudePrev + COLON_SCREEN_CrudePrev:TEETHLOST_CrudePrev + 
+    COREM_CrudePrev:COREW_CrudePrev + COREM_CrudePrev:DENTAL_CrudePrev + 
+    COREM_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:DENTAL_CrudePrev + 
+    COREW_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:TEETHLOST_CrudePrev + 
+    DENTAL_CrudePrev:PAPTEST_CrudePrev + DENTAL_CrudePrev:TEETHLOST_CrudePrev + 
+    PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.new)
+
+plot(new)
+```
+
+
+
+
 
 
 
