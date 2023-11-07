@@ -3,8 +3,9 @@ library(olsrr)
 ```
 
 ```{r}
-df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603-data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
 head(df)
+
 
 ```
 
