@@ -1,0 +1,31 @@
+```{r}
+df = read.csv('500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+head(df)
+
+```
+
+
+
+```{r}
+#removing all data but the "prevalence" measures for calculations. 
+#df.calcs = df frame used for calculations. 
+df.calcs <- subset(df, select =- c(StateAbbr, PlaceName, PlaceFIPS, TractFIPS,Place_TractID,Population2010, ACCESS2_Crude95CI, ARTHRITIS_Crude95CI, BINGE_Crude95CI, BPHIGH_Crude95CI, BPMED_Crude95CI, CANCER_Crude95CI, CASTHMA_Crude95CI, CHD_Crude95CI, CHECKUP_Crude95CI, CHOLSCREEN_Crude95CI, COLON_SCREEN_Crude95CI,COPD_Crude95CI, COREM_Crude95CI, COREW_Crude95CI, CSMOKING_Crude95CI, DENTAL_Crude95CI,DIABETES_Crude95CI,  HIGHCHOL_Crude95CI, KIDNEY_Crude95CI, LPA_Crude95CI, MAMMOUSE_Crude95CI, MHLTH_Crude95CI, OBESITY_Crude95CI, PAPTEST_Crude95CI, PHLTH_Crude95CI, SLEEP_Crude95CI, STROKE_Crude95CI, TEETHLOST_Crude95CI, Geolocation))
+
+head(df.calcs)
+```
+
+
+
+```{r}
+cancer.lm <- lm(CANCER_CrudePrev ~ ., data = df.calcs)
+
+summary(cancer.lm)
+```
+
+
+
+```{r}
+kidney.lm <- lm(KIDNEY_CrudePrev ~., data = df.calcs)
+
+summary(kidney.lm)
+```
