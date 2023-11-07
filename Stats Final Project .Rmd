@@ -3,12 +3,10 @@ library(olsrr)
 ```
 
 ```{r}
-df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603-data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
 head(df)
 
 ```
-
-
 
 ```{r}
 #removing all data but the "prevalence" measures for calculations. 
@@ -17,7 +15,6 @@ df.calcs <- subset(df, select =- c(StateAbbr, PlaceName, PlaceFIPS, TractFIPS,Pl
 
 head(df.calcs)
 ```
-
 
 ```{r}
 #narrowing the factors to only be unhealthy habits and preventative measures
@@ -47,31 +44,29 @@ anova(cancer.lm, cancer.reduced)
 
 ```
 
-
 ```{r}
 plot(cancer.reduced)
 ?VIF
 
 ```
+
 ```{r}
 VIF(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
 
 
 ```
+
 ```{r}
 pairs(cancer.pred.only)
 ```
 
-
-Given the ANOVA output, we can drop ACCESS2_CrudePrev. 
-
+Given the ANOVA output, we can drop ACCESS2_CrudePrev.
 
 ```{r}
 cancer.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev)^2, data = df.unhealthy.precitors)
 
 summary(cancer.interactions)
 ```
-
 
 ```{r}
 model_step <- step(cancer.pred.only.interactions, direction = "both")
@@ -110,12 +105,10 @@ geom_point() + geom_smooth()+
 geom_hline(yintercept = 0)
 ```
 
-
 ```{r}
 plot(model_step)
 
 ```
-
 
 ```{r}
 library(MASS)
@@ -126,7 +119,6 @@ cancer.pred.new = cancer.pred.only %>%
 
 head(cancer.pred.new)
 ```
-
 
 ```{r}
 new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + 
@@ -152,13 +144,3 @@ new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev +
 
 plot(new)
 ```
-
-
-
-
-
-
-
-
-
-
