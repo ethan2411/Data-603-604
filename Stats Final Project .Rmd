@@ -1,5 +1,9 @@
 ```{r}
-df = read.csv('500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+library(olsrr)
+```
+
+```{r}
+df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
 head(df)
 
 ```
@@ -29,3 +33,25 @@ kidney.lm <- lm(KIDNEY_CrudePrev ~., data = df.calcs)
 
 summary(kidney.lm)
 ```
+
+
+```{r}
+cancer.interactions <- lm(CANCER_CrudePrev ~ .^2, data = df.calcs)
+summary(cancer.interactions)
+```
+
+```{r}
+back.model <-ols_step_backward_p(cancer.interactions, prem = 0.3, details=TRUE)
+summary(back.model$model)
+```
+
+
+
+
+```{r}
+summary(back.model$model)
+```
+
+
+
+
