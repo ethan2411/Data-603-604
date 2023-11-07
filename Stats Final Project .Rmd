@@ -52,6 +52,25 @@ summary(back.model$model)
 summary(back.model$model)
 ```
 
+```{r}
+#narrowing the factors to only be unhealthy habits and preventative measures
+df.unhealthy.precitors <- df.calcs <- subset(df.calcs, select =- c(ARTHRITIS_CrudePrev, BPHIGH_CrudePrev, CASTHMA_CrudePrev, CHD_CrudePrev, COPD_CrudePrev, DIABETES_CrudePrev, HIGHCHOL_CrudePrev, KIDNEY_CrudePrev, MAMMOUSE_CrudePrev, MHLTH_CrudePrev, PHLTH_CrudePrev, STROKE_CrudePrev))
+head(df.unhealthy.precitors)
+```
+
+```{r}
+cancer.pred.lm <- lm(CANCER_CrudePrev ~ . , data = df.unhealthy.precitors)
+summary(cancer.pred.lm)
+```
+
+```{r}
+cancer.pred.reduced <- lm(CANCER_CrudePrev ~ ACCESS2_CrudePrev + BINGE_CrudePrev  + BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + CSMOKING_CrudePrev + DENTAL_CrudePrev + OBESITY_CrudePrev + PAPTEST_CrudePrev + SLEEP_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors)
+summary(cancer.pred.reduced)
+anova(cancer.pred.lm, cancer.pred.reduced)
+```
+
+
+
 
 
 
