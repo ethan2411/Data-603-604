@@ -60,7 +60,8 @@ plot(cancer.reduced)
 ```
 
 ```{r}
-VIF(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
+library(car)
+vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
 
 
 ```
@@ -161,3 +162,17 @@ new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev +
 
 plot(new)
 ```
+
+
+```{r}
+library(lmtest)
+bptest(new)
+```
+
+
+
+
+
+
+
+
