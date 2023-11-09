@@ -59,12 +59,6 @@ plot(cancer.reduced)
 
 ```
 
-```{r}
-library(car)
-vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
-
-
-```
 
 ```{r}
 pairs(cancer.pred.only)
@@ -120,7 +114,7 @@ geom_hline(yintercept = 0)
 ```
 
 ```{r}
-plot(model_step)
+plot(model.step)
 
 ```
 
@@ -130,16 +124,16 @@ plot(model_step)
 library(MASS)
 bc = boxcox(model_step,lambda=seq(-1,1))
 
-cancer.pred.new = cancer.pred.only %>%
+cancer.pred.boxcox = cancer.pred.only %>%
   mutate(CANCER_boxcox = (CANCER_CrudePrev^lambda - 1)/lambda)
 
-head(cancer.pred.new)
+head(cancer.pred.boxcox)
 ```
 
 #### Interactions with box cox
 
 ```{r}
-new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + 
+interactions.boxcox = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + 
     CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + 
     COREW_CrudePrev + DENTAL_CrudePrev + PAPTEST_CrudePrev + 
     TEETHLOST_CrudePrev + BPMED_CrudePrev:CHECKUP_CrudePrev + 
@@ -160,14 +154,67 @@ new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev +
     DENTAL_CrudePrev:PAPTEST_CrudePrev + DENTAL_CrudePrev:TEETHLOST_CrudePrev + 
     PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.new)
 
-plot(new)
+plot(interactions.boxcox)
 ```
 
 
 ```{r}
 library(lmtest)
-bptest(new)
+bptest(interactions.boxcox)
 ```
+Based on the above low p-value, we can assume there is heteroscedasticity in the model. We will need further trasnformations to the model to meet the needed assumption. 
+
+
+Since we did not satify the assumption of homoscedasticity, return to VIF to remove highest VIF value (DENTAL_CrudePrev)
+
+```{r}
+library(car)
+vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
+
+
+```
+
+
+####Additive model removing highest VIF value (DENTAL_CrudePrev)
+
+```{r}
+#removing DENTAL_CrudePrev since it has the highest VIF value
+
+additive.nodental <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors)
+
+summary(additive.nodental)
+
+anova(cancer.lm, additive.nodental`)
+
+
+```
+
+We cannot remove DENTAL_CrudePrev since the ANOVA value is less than 0.05. Try removing the variable with the second highest VIF. 
+
+
+####Additive model removing second highest VIF value (TEETHLOST_CrudePrev)
+
+```{r}
+#removing TEETHLOST_CrudePrev since it has the second highest VIF value, and we cannot remove the term with the highest VIF according to the ANOVA test. 
+
+additive.noteethlost <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev, data = df.unhealthy.precitors)
+
+summary(additive.noteethlost)
+
+anova(cancer.lm, additive.noteethlost)
+
+
+```
+
+Since the P-value of the ANOVA is less than 0.05, we cannnot drop TEETHLOST_CrudePrev. 
+
+
+
+
+
+
+
+
 
 
 
