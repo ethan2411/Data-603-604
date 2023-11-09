@@ -53,12 +53,15 @@ anova(cancer.lm, cancer.reduced)
 
 ```
 
+According to ANOVA, we are good to drop ACCESS2_CrudePrev. 
+
+
+
 ```{r}
+#testing to see if this meets the assumptions of the model.
 plot(cancer.reduced)
-?VIF
-
 ```
-
+The model does NOT meet the criteria of the model. 
 
 ```{r}
 pairs(cancer.pred.only)
@@ -72,7 +75,7 @@ cancer.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePre
 summary(cancer.interactions)
 ```
 
-## Stepwise Model
+## Stepwise Model (AIC Prioritized)
 
 ```{r}
 model_step <- step(cancer.pred.only.interactions, direction = "both")
@@ -124,8 +127,13 @@ plot(model.step)
 library(MASS)
 bc = boxcox(model_step,lambda=seq(-1,1))
 
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
 cancer.pred.boxcox = cancer.pred.only %>%
-  mutate(CANCER_boxcox = (CANCER_CrudePrev^lambda - 1)/lambda)
+  mutate(CANCER_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
 
 head(cancer.pred.boxcox)
 ```
@@ -155,6 +163,12 @@ interactions.boxcox = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_Cru
     PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.new)
 
 plot(interactions.boxcox)
+summary(interactions.boxcox)
+```
+
+```{r}
+summary(interactions.boxcox)$sigma
+
 ```
 
 
@@ -163,6 +177,115 @@ library(lmtest)
 bptest(interactions.boxcox)
 ```
 Based on the above low p-value, we can assume there is heteroscedasticity in the model. We will need further trasnformations to the model to meet the needed assumption. 
+
+
+```{r}
+#shapiro.test(residuals(interactions.boxcox))
+#Error in shapiro.test(residuals(interactions.boxcox)) :sample size must be between 3 and 5000
+```
+
+Since we cannot complete the Shapiro Wilk Test because our sample size is too large, we must rely on qqplot to test for normality. 
+
+```{r}
+#perform Kolmogorov-Smirnov test (2 sample test, creating a new sample that is normal)
+ks.test(x = residuals( interactions.boxcox), y = rnorm(mean = 0, sd = sqrt(0.08362472), 24825))
+```
+Based on the KS test, the distribution is not normal. 
+
+
+###Stepwise Model Prioritizing BIC instead of AIC 
+```{r}
+model_step_bic <- step(cancer.pred.only.interactions, direction = "both", k = log(24826))
+
+```
+
+
+
+```{r}
+cancer.pred.only.interactions
+```
+
+```{r}
+summary(model_step_bic)
+```
+
+
+
+
+Getting a nice formula to display. 
+
+
+```{r}
+rounded_coefficients <- round(coefficients(model_step_bic), 6)  # Round coefficients to 6 digits
+
+# Construct the formula with rounded coefficients
+formula_str <- paste0("y ~ ", 
+                     round(rounded_coefficients[1], 6), 
+                     "", 
+                     paste(sprintf(" %+.6f*%s ", 
+                                   rounded_coefficients[-1], 
+                                   names(rounded_coefficients[-1])), 
+                           collapse="")
+                     )
+
+# Convert the formula string into a formula object
+formula_with_rounded_coefficients <- as.formula(formula_str)
+
+# Print the formula
+print(formula_with_rounded_coefficients)
+```
+
+
+```{r}
+plot(model_step_bic)
+```
+
+
+```{r}
+bc.bic = boxcox(model_step_bic,lambda=seq(-1,1))
+
+bestlambda.bic=bc.bic$x[which(bc.bic$y==max(bc.bic$y))]
+bestlambda.bic
+```
+
+```{r}
+cancer.pred.boxcox = cancer.pred.only %>%
+  mutate(CANCER_boxcox_bic = (CANCER_CrudePrev^lambda - 1)/lambda)
+
+head(cancer.pred.boxcox)
+```
+
+```{r}
+interactions.boxcox.bic <- lm(CANCER_boxcox_bic ~ BPMED_CrudePrev + CHECKUP_CrudePrev + 
+    CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + 
+    COREW_CrudePrev + DENTAL_CrudePrev + PAPTEST_CrudePrev + 
+    TEETHLOST_CrudePrev + BPMED_CrudePrev:CHECKUP_CrudePrev + 
+    BPMED_CrudePrev:CHOLSCREEN_CrudePrev + BPMED_CrudePrev:COLON_SCREEN_CrudePrev + 
+    BPMED_CrudePrev:COREM_CrudePrev + BPMED_CrudePrev:COREW_CrudePrev + 
+    BPMED_CrudePrev:PAPTEST_CrudePrev + BPMED_CrudePrev:TEETHLOST_CrudePrev + 
+    CHECKUP_CrudePrev:CHOLSCREEN_CrudePrev + CHECKUP_CrudePrev:COLON_SCREEN_CrudePrev + 
+    CHECKUP_CrudePrev:COREM_CrudePrev + CHECKUP_CrudePrev:DENTAL_CrudePrev + 
+    CHECKUP_CrudePrev:PAPTEST_CrudePrev + CHECKUP_CrudePrev:TEETHLOST_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COLON_SCREEN_CrudePrev + CHOLSCREEN_CrudePrev:COREM_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COREW_CrudePrev + CHOLSCREEN_CrudePrev:DENTAL_CrudePrev + 
+    CHOLSCREEN_CrudePrev:PAPTEST_CrudePrev + CHOLSCREEN_CrudePrev:TEETHLOST_CrudePrev + 
+    COLON_SCREEN_CrudePrev:COREW_CrudePrev + COLON_SCREEN_CrudePrev:DENTAL_CrudePrev + 
+    COLON_SCREEN_CrudePrev:PAPTEST_CrudePrev + COLON_SCREEN_CrudePrev:TEETHLOST_CrudePrev + 
+    COREM_CrudePrev:COREW_CrudePrev + COREM_CrudePrev:DENTAL_CrudePrev + 
+    COREM_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:DENTAL_CrudePrev + 
+    COREW_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:TEETHLOST_CrudePrev + 
+    DENTAL_CrudePrev:PAPTEST_CrudePrev + DENTAL_CrudePrev:TEETHLOST_CrudePrev + 
+    PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.boxcox)
+
+plot(interactions.boxcox.bic)
+```
+
+
+
+
+
+
+####Additive model removing highest VIF value (DENTAL_CrudePrev)
 
 
 Since we did not satify the assumption of homoscedasticity, return to VIF to remove highest VIF value (DENTAL_CrudePrev)
@@ -175,8 +298,6 @@ vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_Crude
 ```
 
 
-####Additive model removing highest VIF value (DENTAL_CrudePrev)
-
 ```{r}
 #removing DENTAL_CrudePrev since it has the highest VIF value
 
@@ -184,9 +305,7 @@ additive.nodental <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev +
 
 summary(additive.nodental)
 
-anova(cancer.lm, additive.nodental`)
-
-
+anova(cancer.lm, additive.nodental)
 ```
 
 We cannot remove DENTAL_CrudePrev since the ANOVA value is less than 0.05. Try removing the variable with the second highest VIF. 
@@ -209,8 +328,9 @@ anova(cancer.lm, additive.noteethlost)
 Since the P-value of the ANOVA is less than 0.05, we cannnot drop TEETHLOST_CrudePrev. 
 
 
-
-
+```{r}
+?step
+```
 
 
 
