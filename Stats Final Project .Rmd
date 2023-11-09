@@ -1,6 +1,10 @@
+# Data 603 Term Project
+
 ```{r}
 library(olsrr)
 ```
+
+## Loading Data
 
 ```{r}
 df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
@@ -8,6 +12,8 @@ head(df)
 
 
 ```
+
+## Feature Selection
 
 ```{r}
 #removing all data but the "prevalence" measures for calculations. 
@@ -28,6 +34,8 @@ head(df.unhealthy.precitors)
 cancer.pred.only <- subset(df.unhealthy.precitors,  select =- c(BINGE_CrudePrev, CSMOKING_CrudePrev, LPA_CrudePrev, OBESITY_CrudePrev, SLEEP_CrudePrev))
 head(cancer.pred.only)
 ```
+
+## Full Linear Model
 
 ```{r}
 cancer.lm <- lm(CANCER_CrudePrev ~ ., data = cancer.pred.only)
@@ -69,6 +77,8 @@ cancer.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePre
 summary(cancer.interactions)
 ```
 
+## Stepwise Model
+
 ```{r}
 model_step <- step(cancer.pred.only.interactions, direction = "both")
 
@@ -98,6 +108,8 @@ formula_with_rounded_coefficients <- as.formula(formula_str)
 print(formula_with_rounded_coefficients)
 ```
 
+## Model Assumptions
+
 ```{r}
 #linearity assumption
 library(ggplot2)
@@ -111,6 +123,8 @@ plot(model_step)
 
 ```
 
+### Box Cox Transformation
+
 ```{r}
 library(MASS)
 bc = boxcox(model_step,lambda=seq(-1,1))
@@ -120,6 +134,8 @@ cancer.pred.new = cancer.pred.only %>%
 
 head(cancer.pred.new)
 ```
+
+#### Interactions with box cox
 
 ```{r}
 new = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + 
