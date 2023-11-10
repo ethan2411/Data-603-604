@@ -1,3 +1,14 @@
+---
+title: 'Data 603 Term Project'
+author: "Ethan Scott, James Huvenaars, Connor Horemans"
+date: "2023-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 # Data 603 Term Project
 
 ```{r}
@@ -9,8 +20,6 @@ library(olsrr)
 ```{r}
 df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
 head(df)
-
-
 ```
 
 ## Feature Selection
@@ -20,57 +29,120 @@ head(df)
 #df.calcs = df frame used for calculations. 
 df.calcs <- subset(df, select =- c(StateAbbr, PlaceName, PlaceFIPS, TractFIPS,Place_TractID,Population2010, ACCESS2_Crude95CI, ARTHRITIS_Crude95CI, BINGE_Crude95CI, BPHIGH_Crude95CI, BPMED_Crude95CI, CANCER_Crude95CI, CASTHMA_Crude95CI, CHD_Crude95CI, CHECKUP_Crude95CI, CHOLSCREEN_Crude95CI, COLON_SCREEN_Crude95CI,COPD_Crude95CI, COREM_Crude95CI, COREW_Crude95CI, CSMOKING_Crude95CI, DENTAL_Crude95CI,DIABETES_Crude95CI,  HIGHCHOL_Crude95CI, KIDNEY_Crude95CI, LPA_Crude95CI, MAMMOUSE_Crude95CI, MHLTH_Crude95CI, OBESITY_Crude95CI, PAPTEST_Crude95CI, PHLTH_Crude95CI, SLEEP_Crude95CI, STROKE_Crude95CI, TEETHLOST_Crude95CI, Geolocation))
 
-head(df.calcs)
+#head(df.calcs)
 ```
 
 ```{r}
 #narrowing the factors to only be unhealthy habits and preventative measures
 df.unhealthy.precitors <- df.calcs <- subset(df.calcs, select =- c(ARTHRITIS_CrudePrev, BPHIGH_CrudePrev, CASTHMA_CrudePrev, CHD_CrudePrev, COPD_CrudePrev, DIABETES_CrudePrev, HIGHCHOL_CrudePrev, KIDNEY_CrudePrev, MAMMOUSE_CrudePrev, MHLTH_CrudePrev, PHLTH_CrudePrev, STROKE_CrudePrev))
-head(df.unhealthy.precitors)
+#head(df.unhealthy.precitors)
 ```
 
 ```{r}
 #narrowing the dataset even further to just predictive variables
 cancer.pred.only <- subset(df.unhealthy.precitors,  select =- c(BINGE_CrudePrev, CSMOKING_CrudePrev, LPA_CrudePrev, OBESITY_CrudePrev, SLEEP_CrudePrev))
-head(cancer.pred.only)
+cancer.df = na.omit(data.frame(cancer.pred.only))
+head(cancer.df)
 ```
 
 ## Full Linear Model
 
 ```{r}
-cancer.lm <- lm(CANCER_CrudePrev ~ ., data = cancer.pred.only)
+cancer.lm <- lm(CANCER_CrudePrev ~ ., data = cancer.df)
 summary(cancer.lm)
 ```
 
+### Reduced Model
+
 ```{r}
 #removing ACCESS2_CrudePrev since not statistically significant
-cancer.reduced <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors)
+cancer.reduced <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = cancer.df)
 
 summary(cancer.reduced)
 
+#p-value from anova is greater than 0.05, reduced model is not significantly different than full model
 anova(cancer.lm, cancer.reduced)
-
-
 ```
 
-According to ANOVA, we are good to drop ACCESS2_CrudePrev. 
+According to ANOVA, we are good to drop ACCESS2_CrudePrev.
 
-
-
-```{r}
+```{r echo=TRUE}
 #testing to see if this meets the assumptions of the model.
-plot(cancer.reduced)
+par(mfrow = c(2, 2))  # 2 rows, 2 columns
+plot(cancer.reduced, which = 1)
+plot(cancer.reduced, which = 2)
+plot(cancer.reduced, which = 3)
+plot(cancer.reduced, which = 4)
 ```
-The model does NOT meet the criteria of the model. 
+
+The model does NOT meet the criteria of the model.
 
 ```{r}
-pairs(cancer.pred.only)
+pairs(cancer.df)
 ```
 
 Given the ANOVA output, we can drop ACCESS2_CrudePrev.
 
+#### Box Cox Transformation on Reduced
+
 ```{r}
-cancer.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev)^2, data = df.unhealthy.precitors)
+bc = boxcox(cancer.reduced,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
+cancer.boxcox = cancer.df %>%
+  mutate(CANCER_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
+
+head(cancer.boxcox)
+```
+
+```{r}
+bc.cancer <- lm(CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = cancer.boxcox)
+summary(bc.cancer)
+```
+
+```{r}
+#still not good
+plot(bc.cancer)
+```
+
+#### Log Transformation on Reduced
+
+```{r}
+# Log transform the response variable
+cancer.reduced_log <- lm(log(CANCER_CrudePrev) ~ log(BPMED_CrudePrev) + log(CHECKUP_CrudePrev) + log(CHOLSCREEN_CrudePrev) + log(COLON_SCREEN_CrudePrev) + log(COREM_CrudePrev) + log(COREW_CrudePrev) + log(DENTAL_CrudePrev) + log(PAPTEST_CrudePrev) + log(TEETHLOST_CrudePrev), data = cancer.df)
+summary(cancer.reduced_log)
+#Variances are ew, gross, yucky...
+#normality has smaller lower tail, upper tail is gross though
+plot(cancer.reduced_log)
+```
+
+#### Square Root Transformation on Reduced
+
+```{r}
+# Square root transform the response variable
+cancer.reduced_sqrt <- lm(sqrt(CANCER_CrudePrev) ~ sqrt(BPMED_CrudePrev) + sqrt(CHECKUP_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev) + sqrt(COLON_SCREEN_CrudePrev) + sqrt(COREM_CrudePrev) + sqrt(COREW_CrudePrev) + sqrt(DENTAL_CrudePrev) + sqrt(PAPTEST_CrudePrev) + sqrt(TEETHLOST_CrudePrev), data = cancer.df)
+summary(cancer.reduced_sqrt)
+#this one also needs jail
+plot(cancer.reduced_sqrt)
+```
+
+#### Inverse Transformation
+
+```{r}
+cancer.reduced_inverse <- lm(I(1/CANCER_CrudePrev) ~ I(1/BPMED_CrudePrev) + I(1/CHECKUP_CrudePrev) + I(1/CHOLSCREEN_CrudePrev) + I(1/COLON_SCREEN_CrudePrev) + I(1/COREM_CrudePrev) + I(1/COREW_CrudePrev) + I(1/DENTAL_CrudePrev) + I(1/PAPTEST_CrudePrev) + I(1/TEETHLOST_CrudePrev), data = cancer.df)
+summary(cancer.reduced_inverse)
+#what the actual fuck is this?
+plot(cancer.reduced_inverse)
+```
+
+## Interactions Model
+
+```{r}
+cancer.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev)^2, data = cancer.df)
 
 summary(cancer.interactions)
 ```
@@ -78,8 +150,7 @@ summary(cancer.interactions)
 ## Stepwise Model (AIC Prioritized)
 
 ```{r}
-model_step <- step(cancer.pred.only.interactions, direction = "both")
-
+model_step <- step(cancer.interactions, direction = "both")
 ```
 
 ```{r}
@@ -118,7 +189,6 @@ geom_hline(yintercept = 0)
 
 ```{r}
 plot(model.step)
-
 ```
 
 ### Box Cox Transformation
@@ -132,7 +202,8 @@ bestlambda
 ```
 
 ```{r}
-cancer.pred.boxcox = cancer.pred.only %>%
+library(mosaic)
+cancer.pred.boxcox = cancer.df %>%
   mutate(CANCER_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
 
 head(cancer.pred.boxcox)
@@ -160,7 +231,7 @@ interactions.boxcox = lm(formula = CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_Cru
     COREM_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:DENTAL_CrudePrev + 
     COREW_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:TEETHLOST_CrudePrev + 
     DENTAL_CrudePrev:PAPTEST_CrudePrev + DENTAL_CrudePrev:TEETHLOST_CrudePrev + 
-    PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.new)
+    PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.boxcox)
 
 plot(interactions.boxcox)
 summary(interactions.boxcox)
@@ -171,49 +242,39 @@ summary(interactions.boxcox)$sigma
 
 ```
 
-
 ```{r}
 library(lmtest)
 bptest(interactions.boxcox)
 ```
-Based on the above low p-value, we can assume there is heteroscedasticity in the model. We will need further trasnformations to the model to meet the needed assumption. 
 
+Based on the above low p-value, we can assume there is heteroscedasticity in the model. We will need further trasnformations to the model to meet the needed assumption.
 
 ```{r}
 #shapiro.test(residuals(interactions.boxcox))
 #Error in shapiro.test(residuals(interactions.boxcox)) :sample size must be between 3 and 5000
 ```
 
-Since we cannot complete the Shapiro Wilk Test because our sample size is too large, we must rely on qqplot to test for normality. 
+Since we cannot complete the Shapiro Wilk Test because our sample size is too large, we must rely on qqplot to test for normality.
 
 ```{r}
 #perform Kolmogorov-Smirnov test (2 sample test, creating a new sample that is normal)
 ks.test(x = residuals( interactions.boxcox), y = rnorm(mean = 0, sd = sqrt(0.08362472), 24825))
 ```
-Based on the KS test, the distribution is not normal. 
 
+Based on the KS test, the distribution is not normal.
 
-###Stepwise Model Prioritizing BIC instead of AIC 
-```{r}
-model_step_bic <- step(cancer.pred.only.interactions, direction = "both", k = log(24826))
-
-```
-
-
+## Stepwise Model Prioritizing BIC instead of AIC
 
 ```{r}
-cancer.pred.only.interactions
+model_step_bic <- step(cancer.interactions, direction = "both", k = log(24826))
+
 ```
 
 ```{r}
 summary(model_step_bic)
 ```
 
-
-
-
-Getting a nice formula to display. 
-
+Getting a nice formula to display.
 
 ```{r}
 rounded_coefficients <- round(coefficients(model_step_bic), 6)  # Round coefficients to 6 digits
@@ -235,11 +296,9 @@ formula_with_rounded_coefficients <- as.formula(formula_str)
 print(formula_with_rounded_coefficients)
 ```
 
-
 ```{r}
 plot(model_step_bic)
 ```
-
 
 ```{r}
 bc.bic = boxcox(model_step_bic,lambda=seq(-1,1))
@@ -249,8 +308,8 @@ bestlambda.bic
 ```
 
 ```{r}
-cancer.pred.boxcox = cancer.pred.only %>%
-  mutate(CANCER_boxcox_bic = (CANCER_CrudePrev^lambda - 1)/lambda)
+cancer.pred.boxcox = cancer.df %>%
+  mutate(CANCER_boxcox_bic = (CANCER_CrudePrev^bestlambda.bic - 1)/bestlambda.bic)
 
 head(cancer.pred.boxcox)
 ```
@@ -280,13 +339,7 @@ interactions.boxcox.bic <- lm(CANCER_boxcox_bic ~ BPMED_CrudePrev + CHECKUP_Crud
 plot(interactions.boxcox.bic)
 ```
 
-
-
-
-
-
-####Additive model removing highest VIF value (DENTAL_CrudePrev)
-
+### Additive model removing highest VIF value (DENTAL_CrudePrev)
 
 Since we did not satify the assumption of homoscedasticity, return to VIF to remove highest VIF value (DENTAL_CrudePrev)
 
@@ -296,7 +349,6 @@ vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_Crude
 
 
 ```
-
 
 ```{r}
 #removing DENTAL_CrudePrev since it has the highest VIF value
@@ -308,10 +360,9 @@ summary(additive.nodental)
 anova(cancer.lm, additive.nodental)
 ```
 
-We cannot remove DENTAL_CrudePrev since the ANOVA value is less than 0.05. Try removing the variable with the second highest VIF. 
+We cannot remove DENTAL_CrudePrev since the ANOVA value is less than 0.05. Try removing the variable with the second highest VIF.
 
-
-####Additive model removing second highest VIF value (TEETHLOST_CrudePrev)
+### Additive model removing second highest VIF value (TEETHLOST_CrudePrev)
 
 ```{r}
 #removing TEETHLOST_CrudePrev since it has the second highest VIF value, and we cannot remove the term with the highest VIF according to the ANOVA test. 
@@ -325,21 +376,90 @@ anova(cancer.lm, additive.noteethlost)
 
 ```
 
-Since the P-value of the ANOVA is less than 0.05, we cannnot drop TEETHLOST_CrudePrev. 
-
+Since the P-value of the ANOVA is less than 0.05, we cannnot drop TEETHLOST_CrudePrev.
 
 ```{r}
 ?step
 ```
 
+## Polynomial?
 
+```{r}
+polynomial.df = na.omit(cancer.df)
+head(polynomial.df)
+```
 
+```{r}
+# Quadratic Polynomial Regression
+cancer.quadratic <- lm(CANCER_CrudePrev ~ poly(BPMED_CrudePrev, 2) + poly(CHECKUP_CrudePrev, 2) + poly(CHOLSCREEN_CrudePrev, 2) + poly(COLON_SCREEN_CrudePrev, 2) + poly(COREM_CrudePrev, 2) + poly(COREW_CrudePrev, 2) + poly(DENTAL_CrudePrev, 2) + poly(PAPTEST_CrudePrev, 2) + poly(TEETHLOST_CrudePrev, 2), data = polynomial.df)
+#all significant so thats promissing
+summary(cancer.quadratic)
+#gross
+plot(cancer.quadratic)
+```
 
+```{r}
+# 3rd Degree Polynomial Regression
+cancer.cubic <- lm(CANCER_CrudePrev ~ poly(BPMED_CrudePrev, 3) + poly(CHECKUP_CrudePrev, 3) + poly(CHOLSCREEN_CrudePrev, 3) + poly(COLON_SCREEN_CrudePrev, 3) + poly(COREM_CrudePrev, 3) + poly(COREW_CrudePrev, 3) + poly(DENTAL_CrudePrev, 3) + poly(PAPTEST_CrudePrev, 3) + poly(TEETHLOST_CrudePrev, 3), data = polynomial.df)
+#still not bad
+summary(cancer.cubic)
+#ew yuck
+plot(cancer.cubic)
+```
 
+```{r}
+# 4th Degree Polynomial Regression
+cancer.quartic <- lm(CANCER_CrudePrev ~ poly(BPMED_CrudePrev, 4) + poly(CHECKUP_CrudePrev, 4) + poly(CHOLSCREEN_CrudePrev, 4) + poly(COLON_SCREEN_CrudePrev, 4) + poly(COREM_CrudePrev, 4) + poly(COREW_CrudePrev, 4) + poly(DENTAL_CrudePrev, 4) + poly(PAPTEST_CrudePrev, 4) + poly(TEETHLOST_CrudePrev, 4), data = polynomial.df)
 
+summary(cancer.quartic)
+#this is actually looking more prommising.... soooooo im going ham next
+plot(cancer.quartic)
+```
 
+```{r}
+# 8th Degree Polynomial Regression
+cancer.8 <- lm(CANCER_CrudePrev ~ poly(BPMED_CrudePrev, 8) + poly(CHECKUP_CrudePrev, 8) + poly(CHOLSCREEN_CrudePrev, 8) + poly(COLON_SCREEN_CrudePrev, 8) + poly(COREM_CrudePrev, 8) + poly(COREW_CrudePrev, 8) + poly(DENTAL_CrudePrev, 8) + poly(PAPTEST_CrudePrev, 8) + poly(TEETHLOST_CrudePrev, 8), data = polynomial.df)
 
+summary(cancer.8)
+#yucky
+plot(cancer.8)
+```
 
+## LASSO on Polynomial Regression (Not looking good)
 
+```{r}
+library(glmnet)
+```
 
+```{r}
+#Getting train and test splits
+y_train = cancer.df$CANCER_CrudePrev
+X_train = model.matrix(CANCER_CrudePrev ~ poly(BPMED_CrudePrev, 8) + poly(CHECKUP_CrudePrev, 8) + poly(CHOLSCREEN_CrudePrev, 8) + poly(COLON_SCREEN_CrudePrev, 8) + poly(COREM_CrudePrev, 8) + poly(COREW_CrudePrev, 8) + poly(DENTAL_CrudePrev, 8) + poly(PAPTEST_CrudePrev, 8) + poly(TEETHLOST_CrudePrev, 8), data = cancer.df)[, -3]#3rd column is CANCER
 
+# Perform Lasso regression with cross-validation to select the lambda parameter
+cv.lasso = cv.glmnet(X_train, y_train, alpha = 1)
+
+# Fit the final Lasso model with the selected lambda using the training data
+lasso_model = glmnet(X_train, y_train, alpha = 1, lambda = cv.lasso$lambda.min)
+
+#THIS ISNT RIGHT, SHOULD HAVE TRAIN AND TEST SPLITS BUT JUST USING WHOLE DATA FOR RN
+predictions = predict(lasso_model, s = cv.lasso$lambda.min, newx = X_train)
+```
+
+```{r}
+coefficients(lasso_model)
+```
+
+```{r}
+# Calculate residuals
+residuals = y_train-predictions
+# Normality of Residuals
+# Q-Q Plot
+qqnorm(residuals)
+qqline(residuals)
+```
+
+```{r}
+plot(predictions, residuals, main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+```
