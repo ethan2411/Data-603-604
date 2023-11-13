@@ -120,6 +120,11 @@ summary(cancer.reduced_log)
 plot(cancer.reduced_log)
 ```
 
+```{r}
+cancer.log = lm(log(CANCER_CrudePrev) ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = cancer.df)
+plot(cancer.log)
+```
+
 #### Square Root Transformation on Reduced
 
 ```{r}
@@ -130,6 +135,11 @@ summary(cancer.reduced_sqrt)
 plot(cancer.reduced_sqrt)
 ```
 
+```{r}
+cancer.sqrt = lm(sqrt(CANCER_CrudePrev) ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = cancer.df)
+plot(cancer.sqrt)
+```
+
 #### Inverse Transformation
 
 ```{r}
@@ -137,6 +147,11 @@ cancer.reduced_inverse <- lm(I(1/CANCER_CrudePrev) ~ I(1/BPMED_CrudePrev) + I(1/
 summary(cancer.reduced_inverse)
 #what the actual fuck is this?
 plot(cancer.reduced_inverse)
+```
+
+```{r}
+cancer.inv = lm(I(1/CANCER_CrudePrev) ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = cancer.df)
+plot(cancer.inv)
 ```
 
 ## Interactions Model
@@ -382,7 +397,42 @@ Since the P-value of the ANOVA is less than 0.05, we cannnot drop TEETHLOST_Crud
 ?step
 ```
 
-## Polynomial?
+## Transformations on Interactions(Using AIC Model)
+
+### Log
+
+```{r}
+interactions.log = lm(log(CANCER_CrudePrev) ~ log(BPMED_CrudePrev) + log(CHECKUP_CrudePrev) + log(CHOLSCREEN_CrudePrev) + log(COLON_SCREEN_CrudePrev) + log(COREM_CrudePrev) + log(COREW_CrudePrev) + log(DENTAL_CrudePrev) + log(PAPTEST_CrudePrev) + log(TEETHLOST_CrudePrev) + log(BPMED_CrudePrev * CHECKUP_CrudePrev) + log(BPMED_CrudePrev * CHOLSCREEN_CrudePrev) + log(BPMED_CrudePrev * COLON_SCREEN_CrudePrev) + log(BPMED_CrudePrev * COREM_CrudePrev) + log(BPMED_CrudePrev * COREW_CrudePrev) + log(BPMED_CrudePrev * PAPTEST_CrudePrev) + log(BPMED_CrudePrev * TEETHLOST_CrudePrev) + log(CHECKUP_CrudePrev * CHOLSCREEN_CrudePrev) + log(CHECKUP_CrudePrev * COLON_SCREEN_CrudePrev) + log(CHECKUP_CrudePrev * COREM_CrudePrev) + log(CHECKUP_CrudePrev * DENTAL_CrudePrev) + log(CHECKUP_CrudePrev * PAPTEST_CrudePrev) + log(CHECKUP_CrudePrev * TEETHLOST_CrudePrev) + log(CHOLSCREEN_CrudePrev * COLON_SCREEN_CrudePrev) + log(CHOLSCREEN_CrudePrev * COREM_CrudePrev) + log(CHOLSCREEN_CrudePrev * COREW_CrudePrev) + log(CHOLSCREEN_CrudePrev * DENTAL_CrudePrev) + log(CHOLSCREEN_CrudePrev * PAPTEST_CrudePrev) + log(CHOLSCREEN_CrudePrev * TEETHLOST_CrudePrev) + log(COLON_SCREEN_CrudePrev * COREW_CrudePrev) + log(COLON_SCREEN_CrudePrev * DENTAL_CrudePrev) + log(COLON_SCREEN_CrudePrev * PAPTEST_CrudePrev) + log(COLON_SCREEN_CrudePrev * TEETHLOST_CrudePrev) + log(COREM_CrudePrev * COREW_CrudePrev) + log(COREM_CrudePrev * DENTAL_CrudePrev) + log(COREM_CrudePrev * PAPTEST_CrudePrev) + log(COREW_CrudePrev * DENTAL_CrudePrev) + log(COREW_CrudePrev * PAPTEST_CrudePrev) + log(COREW_CrudePrev * TEETHLOST_CrudePrev) + log(DENTAL_CrudePrev * PAPTEST_CrudePrev) + log(DENTAL_CrudePrev * TEETHLOST_CrudePrev) + log(PAPTEST_CrudePrev * TEETHLOST_CrudePrev), data = cancer.df)
+
+```
+
+```{r}
+plot(interactions.log)
+```
+
+### SQRT
+
+```{r}
+interactions.sqrt = lm(sqrt(CANCER_CrudePrev) ~ sqrt(BPMED_CrudePrev) + sqrt(CHECKUP_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev) + sqrt(COLON_SCREEN_CrudePrev) + sqrt(COREM_CrudePrev) + sqrt(COREW_CrudePrev) + sqrt(DENTAL_CrudePrev) + sqrt(PAPTEST_CrudePrev) + sqrt(TEETHLOST_CrudePrev) + sqrt(BPMED_CrudePrev * CHECKUP_CrudePrev) + sqrt(BPMED_CrudePrev * CHOLSCREEN_CrudePrev) + sqrt(BPMED_CrudePrev * COLON_SCREEN_CrudePrev) + sqrt(BPMED_CrudePrev * COREM_CrudePrev) + sqrt(BPMED_CrudePrev * COREW_CrudePrev) + sqrt(BPMED_CrudePrev * PAPTEST_CrudePrev) + sqrt(BPMED_CrudePrev * TEETHLOST_CrudePrev) + sqrt(CHECKUP_CrudePrev * CHOLSCREEN_CrudePrev) + sqrt(CHECKUP_CrudePrev * COLON_SCREEN_CrudePrev) + sqrt(CHECKUP_CrudePrev * COREM_CrudePrev) + sqrt(CHECKUP_CrudePrev * DENTAL_CrudePrev) + sqrt(CHECKUP_CrudePrev * PAPTEST_CrudePrev) + sqrt(CHECKUP_CrudePrev * TEETHLOST_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev * COLON_SCREEN_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev * COREM_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev * COREW_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev * DENTAL_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev * PAPTEST_CrudePrev) + sqrt(CHOLSCREEN_CrudePrev * TEETHLOST_CrudePrev) + sqrt(COLON_SCREEN_CrudePrev * COREW_CrudePrev) + sqrt(COLON_SCREEN_CrudePrev * DENTAL_CrudePrev) + sqrt(COLON_SCREEN_CrudePrev * PAPTEST_CrudePrev) + sqrt(COLON_SCREEN_CrudePrev * TEETHLOST_CrudePrev) + sqrt(COREM_CrudePrev * COREW_CrudePrev) + sqrt(COREM_CrudePrev * DENTAL_CrudePrev) + sqrt(COREM_CrudePrev * PAPTEST_CrudePrev) + sqrt(COREW_CrudePrev * DENTAL_CrudePrev) + sqrt(COREW_CrudePrev * PAPTEST_CrudePrev) + sqrt(COREW_CrudePrev * TEETHLOST_CrudePrev) + sqrt(DENTAL_CrudePrev * PAPTEST_CrudePrev) + sqrt(DENTAL_CrudePrev * TEETHLOST_CrudePrev) + sqrt(PAPTEST_CrudePrev * TEETHLOST_CrudePrev), data = cancer.df)
+
+```
+
+```{r}
+plot(interactions.sqrt)
+```
+
+### Inverse
+
+```{r}
+interactions.inv = lm(I(1/CANCER_CrudePrev) ~ I(1/BPMED_CrudePrev) + I(1/CHECKUP_CrudePrev) + I(1/CHOLSCREEN_CrudePrev) + I(1/COLON_SCREEN_CrudePrev) + I(1/COREM_CrudePrev) + I(1/COREW_CrudePrev) + I(1/DENTAL_CrudePrev) + I(1/PAPTEST_CrudePrev) + I(1/TEETHLOST_CrudePrev) + I(1/(BPMED_CrudePrev * CHECKUP_CrudePrev)) + I(1/(BPMED_CrudePrev * CHOLSCREEN_CrudePrev)) + I(1/(BPMED_CrudePrev * COLON_SCREEN_CrudePrev)) + I(1/(BPMED_CrudePrev * COREM_CrudePrev)) + I(1/(BPMED_CrudePrev * COREW_CrudePrev)) + I(1/(BPMED_CrudePrev * PAPTEST_CrudePrev)) + I(1/(BPMED_CrudePrev * TEETHLOST_CrudePrev)) + I(1/(CHECKUP_CrudePrev * CHOLSCREEN_CrudePrev)) + I(1/(CHECKUP_CrudePrev * COLON_SCREEN_CrudePrev)) + I(1/(CHECKUP_CrudePrev * COREM_CrudePrev)) + I(1/(CHECKUP_CrudePrev * DENTAL_CrudePrev)) + I(1/(CHECKUP_CrudePrev * PAPTEST_CrudePrev)) + I(1/(CHECKUP_CrudePrev * TEETHLOST_CrudePrev)) + I(1/(CHOLSCREEN_CrudePrev * COLON_SCREEN_CrudePrev)) + I(1/(CHOLSCREEN_CrudePrev * COREM_CrudePrev)) + I(1/(CHOLSCREEN_CrudePrev * COREW_CrudePrev)) + I(1/(CHOLSCREEN_CrudePrev * DENTAL_CrudePrev)) + I(1/(CHOLSCREEN_CrudePrev * PAPTEST_CrudePrev)) + I(1/(CHOLSCREEN_CrudePrev * TEETHLOST_CrudePrev)) + I(1/(COLON_SCREEN_CrudePrev * COREW_CrudePrev)) + I(1/(COLON_SCREEN_CrudePrev * DENTAL_CrudePrev)) + I(1/(COLON_SCREEN_CrudePrev * PAPTEST_CrudePrev)) + I(1/(COLON_SCREEN_CrudePrev * TEETHLOST_CrudePrev)) + I(1/(COREM_CrudePrev * COREW_CrudePrev)) + I(1/(COREM_CrudePrev * DENTAL_CrudePrev)) + I(1/(COREM_CrudePrev * PAPTEST_CrudePrev)) + I(1/(COREW_CrudePrev * DENTAL_CrudePrev)) + I(1/(COREW_CrudePrev * PAPTEST_CrudePrev)) + I(1/(COREW_CrudePrev * TEETHLOST_CrudePrev)) + I(1/(DENTAL_CrudePrev * PAPTEST_CrudePrev)) + I(1/(DENTAL_CrudePrev * TEETHLOST_CrudePrev)) + I(1/(PAPTEST_CrudePrev * TEETHLOST_CrudePrev)), data = cancer.df)
+
+```
+
+```{r}
+plot(interactions.inv)
+```
+
+## Polynomial
 
 ```{r}
 polynomial.df = na.omit(cancer.df)
