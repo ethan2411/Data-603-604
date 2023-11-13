@@ -86,13 +86,15 @@ Given the ANOVA output, we can drop ACCESS2_CrudePrev.
 #### Box Cox Transformation on Reduced
 
 ```{r}
-bc = boxcox(cancer.reduced,lambda=seq(-1,1))
+library(car)
+bc = boxCox(cancer.reduced,lambda=seq(-1,1))
 
 bestlambda=bc$x[which(bc$y==max(bc$y))]
 bestlambda
 ```
 
 ```{r}
+library(dplyr)
 cancer.boxcox = cancer.df %>%
   mutate(CANCER_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
 
@@ -203,7 +205,7 @@ geom_hline(yintercept = 0)
 ```
 
 ```{r}
-plot(model.step)
+plot(model_step)
 ```
 
 ### Box Cox Transformation
