@@ -288,6 +288,18 @@ library(mctest)
 imcdiag(interactions.boxcox, method = 'VIF')
 ```
 
+MULTICOLINIARITY IS FOUND FOR THE INTERACTIONS MODEL SINCE THERE ARE INTERACTIONS. MEANING THAT WE REPEAT SOME OF THE VARIABLES (KIND OF) SO NO SHIT THERE IS GOING TO BE CORRELATION. WE SHOULD DO THIS SHIT FOR THE ONE WITHOUT INTERACTIONS. 
+
+```{r}
+no.interactions.boxcox = lm(CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = cancer.pred.boxcox)
+
+summary(no.interactions.boxcox)
+plot(no.interactions.boxcox)
+```
+
+```{r}
+imcdiag(no.interactions.boxcox, method = 'VIF')
+```
 
 
 
