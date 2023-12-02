@@ -256,7 +256,6 @@ summary(interactions.boxcox)
 
 ```{r}
 summary(interactions.boxcox)$sigma
-
 ```
 
 ```{r}
@@ -279,6 +278,18 @@ ks.test(x = residuals( interactions.boxcox), y = rnorm(mean = 0, sd = sqrt(0.083
 ```
 
 Based on the KS test, the distribution is not normal.
+
+
+```{r}
+library(mctest)
+```
+
+```{r}
+imcdiag(interactions.boxcox, method = 'VIF')
+```
+
+
+
 
 ## Stepwise Model Prioritizing BIC instead of AIC
 
@@ -352,6 +363,7 @@ interactions.boxcox.bic <- lm(CANCER_boxcox_bic ~ BPMED_CrudePrev + CHECKUP_Crud
     COREW_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:TEETHLOST_CrudePrev + 
     DENTAL_CrudePrev:PAPTEST_CrudePrev + DENTAL_CrudePrev:TEETHLOST_CrudePrev + 
     PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = cancer.pred.boxcox)
+
 
 plot(interactions.boxcox.bic)
 ```
