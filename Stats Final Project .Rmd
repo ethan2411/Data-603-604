@@ -418,7 +418,7 @@ library(mctest)
 imcdiag(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors), method = 'VIF')
 ```
 
-#### idk whats this is below lol
+#### idk whats this is below lol --> It's wrong, something I put in a few weeks ago (james)
 
 ```{r}
 #removing DENTAL_CrudePrev since it has the highest VIF value

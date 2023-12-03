@@ -19,9 +19,6 @@ library(olsrr)
 
 # Data 603 Term Project
 
-
-
-
 ```{r}
 df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
 head(df)
@@ -50,11 +47,20 @@ vif(additive)
 
 
 ```{r}
+additive.noLPA <- lm(CANCER_CrudePrev ~ BINGE_CrudePrev + CSMOKING_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev, data = df.calcs)
+vif(additive.noLPA)
+# all now have VIFS off Less than 5. let's take it from the top. 
+```
+
+
+
+```{r}
 additive.interactions <- lm(CANCER_CrudePrev ~ (.)^2, df.calcs)
 summary(additive.interactions)
 ```
 ```{r}
 plot(additive.interactions)
+bptest(additive.interactions)
 ```
 
 #log transformation
@@ -67,6 +73,53 @@ bptest(additive.log)
 ```
 
 Log sucks balls, try boxcox
+
+
+```{r}
+#remove LPA_CrudePrev:SLEEP_CrudePrev since it has high p-value. 
+additive.log2 <- lm(log(CANCER_CrudePrev) ~ BINGE_CrudePrev + CSMOKING_CrudePrev + LPA_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev + BINGE_CrudePrev:LPA_CrudePrev + BINGE_CrudePrev:OBESITY_CrudePrev + BINGE_CrudePrev:SLEEP_CrudePrev + CSMOKING_CrudePrev:LPA_CrudePrev + CSMOKING_CrudePrev:OBESITY_CrudePrev + CSMOKING_CrudePrev:SLEEP_CrudePrev + LPA_CrudePrev:OBESITY_CrudePrev + OBESITY_CrudePrev:SLEEP_CrudePrev + BINGE_CrudePrev:CSMOKING_CrudePrev , df.calcs)
+
+summary(additive.log2)
+plot(additive.log2)
+bptest(additive.log2)
+anova(additive.log, additive.log2)
+````
+
+```{r}
+#remove BINGE_CrudePrev:CSMOKING_CrudePrev since it has high p-value. 
+additive.log3 <- lm(log(CANCER_CrudePrev) ~ BINGE_CrudePrev + CSMOKING_CrudePrev + LPA_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev + BINGE_CrudePrev:LPA_CrudePrev + BINGE_CrudePrev:OBESITY_CrudePrev + BINGE_CrudePrev:SLEEP_CrudePrev + CSMOKING_CrudePrev:LPA_CrudePrev + CSMOKING_CrudePrev:OBESITY_CrudePrev + CSMOKING_CrudePrev:SLEEP_CrudePrev + LPA_CrudePrev:OBESITY_CrudePrev + OBESITY_CrudePrev:SLEEP_CrudePrev, df.calcs)
+
+summary(additive.log3)
+plot(additive.log3)
+bptest(additive.log3)
+anova(additive.log, additive.log3)
+````
+
+```{r}
+#remove SMOKING_CrudePrev:SLEEP_CrudePrev since it has high p-value. 
+additive.log4 <- lm(log(CANCER_CrudePrev) ~ BINGE_CrudePrev + CSMOKING_CrudePrev + LPA_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev + BINGE_CrudePrev:LPA_CrudePrev + BINGE_CrudePrev:OBESITY_CrudePrev + BINGE_CrudePrev:SLEEP_CrudePrev + CSMOKING_CrudePrev:LPA_CrudePrev + CSMOKING_CrudePrev:OBESITY_CrudePrev + LPA_CrudePrev:OBESITY_CrudePrev + OBESITY_CrudePrev:SLEEP_CrudePrev, df.calcs)
+
+summary(additive.log4)
+plot(additive.log4)
+bptest(additive.log4)
+anova(additive.log3, additive.log4)
+````
+
+
+```{r}
+#remove BINGE_CrudePrev:OBESITY_CrudePrev since it has high p-value. 
+additive.log5 <- lm(log(CANCER_CrudePrev) ~ BINGE_CrudePrev + CSMOKING_CrudePrev + LPA_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev + BINGE_CrudePrev:LPA_CrudePrev + BINGE_CrudePrev:SLEEP_CrudePrev + CSMOKING_CrudePrev:LPA_CrudePrev + CSMOKING_CrudePrev:OBESITY_CrudePrev + LPA_CrudePrev:OBESITY_CrudePrev + OBESITY_CrudePrev:SLEEP_CrudePrev, df.calcs)
+
+summary(additive.log5)
+plot(additive.log5, which = 5)
+bptest(additive.log5)
+anova(additive.log5, additive.log4)
+````
+```{r}
+df.calcs[cooks.distance(additive.log5)>0.5,]
+plot(additive.log5,pch=18,col="red",which=c(4)) #which =4 only prints the cook distance plot. 
+```
+
 
 #boxcox transformation
 
@@ -93,6 +146,100 @@ summary(additive.sqrt)
 plot(additive.sqrt)
 bptest(additive.sqrt)
 ```
+
+#Checking for square root transformations: 
+
+```{r}
+ggpairs(df.calcs, lower = list(continuous = "smooth_loess", combo = "facethist", discrete = "facetbar", na = "na"))
+
+```
+
+#CANCER AND LPA SEEM A BIT ODD, try to fix that with some higher powers:
+
+
+```{r}
+plot(additive)
+```
+```{r}
+additive.squared <- lm(CANCER_CrudePrev ~ BINGE_CrudePrev + CSMOKING_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev + LPA_CrudePrev + I(LPA_CrudePrev^2), data = df.calcs)
+summary(additive.squared)
+plot(additive.squared, which = 1)
+```
+
+
+```{r}
+more.power <- lm(CANCER_CrudePrev ~ poly(LPA_CrudePrev,11,raw = T) + BINGE_CrudePrev + CSMOKING_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev + LPA_CrudePrev, data = df.calcs)
+summary(more.power)
+plot(more.power, which = 1)
+bptest(more.power)
+```
+
+this sucks too. 
+
+
+
+
+#Remove the highest VIF value (LPA and see how that does)
+
+```{r}
+additive.noLPA <- lm(CANCER_CrudePrev ~ BINGE_CrudePrev + CSMOKING_CrudePrev + OBESITY_CrudePrev + SLEEP_CrudePrev, data = df.calcs)
+vif(additive.noLPA)
+# all now have VIFS off Less than 5. let's take it from the top. 
+```
+
+##Additive Model
+```{r}
+summary(additive.noLPA)
+```
+
+```{r}
+additive.noLPA.noObesity <- lm(CANCER_CrudePrev ~ BINGE_CrudePrev + CSMOKING_CrudePrev + SLEEP_CrudePrev, data = df.calcs)
+
+summary(additive.noLPA.noObesity)
+plot(additive.noLPA.noObesity)
+anova(additive.noLPA, additive.noLPA.noObesity)
+```
+
+##Interactions
+```{r}
+interactions.noLPA.noObesity <- lm(CANCER_CrudePrev ~ (BINGE_CrudePrev + CSMOKING_CrudePrev + SLEEP_CrudePrev)^2, data = df.calcs)
+
+summary(interactions.noLPA.noObesity)
+plot(interactions.noLPA.noObesity)
+bptest(interactions.noLPA.noObesity)
+```
+
+
+```{r}
+bc.NoLPA.NoObesity = boxcox(interactions.noLPA.noObesity,lambda=seq(-1,1))
+
+bestlambda=bc.NoLPA.NoObesity$x[which(bc.NoLPA.NoObesity$y==max(bc$y))]
+bestlambda
+```
+
+since the lambda is approzimately 0.5, we should try a sqrt transformation
+
+
+## Square Root Transformation
+```{r}
+sqrt.noLPA.noObesity <- lm(sqrt(CANCER_CrudePrev) ~ (BINGE_CrudePrev + CSMOKING_CrudePrev + SLEEP_CrudePrev)^2, data = df.calcs)
+
+summary(sqrt.noLPA.noObesity)
+plot(sqrt.noLPA.noObesity)
+bptest(sqrt.noLPA.noObesity)
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
