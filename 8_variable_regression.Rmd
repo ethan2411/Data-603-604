@@ -1,0 +1,253 @@
+---
+title: 'Data 603 Term Project'
+author: "Ethan Scott, James Huvenaars, Connor Horemans"
+date: "2023-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(mctest)
+library(car)
+library(ggplot2)
+library(GGally)
+library(MASS)
+library(mosaic)
+library(lmtest)
+```
+
+# Data 603 Term Project
+
+```{r}
+library(olsrr)
+```
+
+## Loading Data
+
+```{r}
+df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+head(df)
+```
+
+```{r}
+#removing all data but the Cancer crude prevalence and preventative measures. 
+
+#df.calcs = df frame used for calculations. 
+df.calcs <- subset(df, select =- c(StateAbbr, PlaceName, PlaceFIPS, TractFIPS,Place_TractID,Population2010, ACCESS2_Crude95CI, ARTHRITIS_Crude95CI, BINGE_Crude95CI, BPHIGH_Crude95CI, BPMED_Crude95CI, CANCER_Crude95CI, CASTHMA_Crude95CI, CHD_Crude95CI, CHECKUP_Crude95CI, CHOLSCREEN_Crude95CI, COLON_SCREEN_Crude95CI,COPD_Crude95CI, COREM_Crude95CI, COREW_Crude95CI, CSMOKING_Crude95CI, DENTAL_Crude95CI,DIABETES_Crude95CI,  HIGHCHOL_Crude95CI, KIDNEY_Crude95CI, LPA_Crude95CI, MAMMOUSE_Crude95CI, MHLTH_Crude95CI, OBESITY_Crude95CI, PAPTEST_Crude95CI, PHLTH_Crude95CI, SLEEP_Crude95CI, STROKE_Crude95CI, TEETHLOST_Crude95CI, Geolocation, ARTHRITIS_CrudePrev, BPHIGH_CrudePrev, CASTHMA_CrudePrev, CHD_CrudePrev, COPD_CrudePrev, DIABETES_CrudePrev, HIGHCHOL_CrudePrev, KIDNEY_CrudePrev, MAMMOUSE_CrudePrev, MHLTH_CrudePrev, PHLTH_CrudePrev, STROKE_CrudePrev, BINGE_CrudePrev, CSMOKING_CrudePrev, LPA_CrudePrev, OBESITY_CrudePrev, SLEEP_CrudePrev))
+
+head(df.calcs)
+```
+#Additive model
+
+```{r}
+additive <- lm(CANCER_CrudePrev ~., data = df.calcs)
+summary(additive)
+```
+
+```{r}
+#removing ACCESS2_CrudePrev since not statistically significant
+additive.reduced <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.calcs)
+
+summary(cancer.reduced)
+
+#p-value from anova is greater than 0.05, reduced model is not significantly different than full model
+anova(additive, additive.reduced)
+```
+
+```{r}
+plot(additive.reduced)
+```
+the assumptions of the additive model are not met, see VIF. 
+
+
+```{r}
+imcdiag(additive.reduced, method = 'VIF')
+```
+
+```{r}
+additive.final <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.calcs)
+
+imcdiag(additive.final, method = 'VIF')
+```
+```{r}
+plot(additive.final)
+summary(additive.final)
+```
+
+```{r}
+pairs(df.calcs)
+```
+#Interactions Model 
+
+```{r}
+interactions <- (lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev)^2, data = df.calcs))
+summary(interactions)
+```
+
+##Reducing interactions Model (stepwise)
+```{r}
+model_step <- step(interactions, direction = "both")
+```
+
+```{r}
+summary(model_step)
+plot(model_step)
+```
+
+```{r}
+bc = boxcox(model_step,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
+df.boxcox = df.calcs %>%
+  mutate(CANCER_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
+
+tail(df.boxcox)
+```
+
+```{r}
+boxcox.interactions <- lm(CANCER_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + 
+    COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + 
+    PAPTEST_CrudePrev + TEETHLOST_CrudePrev + BPMED_CrudePrev:CHECKUP_CrudePrev + 
+    BPMED_CrudePrev:CHOLSCREEN_CrudePrev + BPMED_CrudePrev:COREM_CrudePrev + 
+    BPMED_CrudePrev:COREW_CrudePrev + BPMED_CrudePrev:PAPTEST_CrudePrev + 
+    CHECKUP_CrudePrev:CHOLSCREEN_CrudePrev + CHECKUP_CrudePrev:COLON_SCREEN_CrudePrev + 
+    CHECKUP_CrudePrev:COREM_CrudePrev + CHECKUP_CrudePrev:COREW_CrudePrev + 
+    CHECKUP_CrudePrev:PAPTEST_CrudePrev + CHECKUP_CrudePrev:TEETHLOST_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COLON_SCREEN_CrudePrev + CHOLSCREEN_CrudePrev:COREM_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COREW_CrudePrev + CHOLSCREEN_CrudePrev:PAPTEST_CrudePrev + 
+    CHOLSCREEN_CrudePrev:TEETHLOST_CrudePrev + COLON_SCREEN_CrudePrev:COREM_CrudePrev + 
+    COLON_SCREEN_CrudePrev:COREW_CrudePrev + COLON_SCREEN_CrudePrev:PAPTEST_CrudePrev + 
+    COLON_SCREEN_CrudePrev:TEETHLOST_CrudePrev + COREM_CrudePrev:COREW_CrudePrev + 
+    COREM_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:PAPTEST_CrudePrev + 
+    PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = df.boxcox)
+
+summary(boxcox.interactions)
+```
+
+
+
+
+
+```{r}
+plot(boxcox.interactions)
+```
+
+
+```{r}
+bptest(boxcox.interactions)
+```
+
+
+
+
+
+#Taking it from the top with a smaller sample 
+
+```{r}
+set.seed(1)
+df_sample <- df.calcs[sample(nrow(df.calcs), 4500), ]
+head(df_sample)
+```
+```{r}
+sample.additive <- lm(CANCER_CrudePrev ~., df_sample)
+summary(sample.additive)
+```
+
+
+```{r}
+#removing ACCESS2_CrudePrev since not statistically significant
+sample.reduced <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df_sample)
+
+summary(sample.reduced)
+
+#p-value from anova is greater than 0.05, reduced model is not significantly different than full model
+anova(sample.additive, sample.reduced)
+```
+
+```{r}
+imcdiag(sample.reduced, method = 'VIF')
+```
+```{r}
+sample.final <- lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df_sample)
+
+imcdiag(sample.final, method = 'VIF')
+```
+
+```{r}
+plot(sample.final)
+```
+
+```{r}
+sample.interactions <- lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev)^2, data = df_sample)
+
+summary(sample.interactions)
+```
+```{r}
+model_step_sample <- step(sample.interactions, direction = "both")
+```
+
+
+```{r}
+summary(model_step_sample)
+plot(model_step_sample)
+```
+
+##log transformation of sample dataset. 
+
+```{r}
+log_sample <- lm(log(CANCER_CrudePrev) ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df_sample)
+
+summary(log_sample)
+plot(log_sample)
+```
+
+```{r}
+bptest(log_sample)
+shapiro.test(residuals(log_sample))
+```
+```{r}
+#extract best lambda
+bc=boxcox(sample.final,lambda=seq(-1,1))
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
+boxcox_sample <- lm((((CANCER_CrudePrev^-0.03030303)-1)/-0.03030303) ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df_sample)
+
+summary(boxcox_sample)
+plot(boxcox_sample)
+bptest(boxcox_sample)
+```
+
+```{r}
+boxcox_sample_interactions <- lm((((CANCER_CrudePrev^-0.03030303)-1)/-0.03030303) ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + 
+    COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + 
+    PAPTEST_CrudePrev + TEETHLOST_CrudePrev + BPMED_CrudePrev:CHECKUP_CrudePrev + 
+    BPMED_CrudePrev:CHOLSCREEN_CrudePrev + BPMED_CrudePrev:COREM_CrudePrev + 
+    BPMED_CrudePrev:COREW_CrudePrev + BPMED_CrudePrev:PAPTEST_CrudePrev + 
+    CHECKUP_CrudePrev:COLON_SCREEN_CrudePrev + CHECKUP_CrudePrev:COREM_CrudePrev + 
+    CHECKUP_CrudePrev:PAPTEST_CrudePrev + CHECKUP_CrudePrev:TEETHLOST_CrudePrev + 
+    CHOLSCREEN_CrudePrev:COLON_SCREEN_CrudePrev + CHOLSCREEN_CrudePrev:PAPTEST_CrudePrev + 
+    CHOLSCREEN_CrudePrev:TEETHLOST_CrudePrev + COLON_SCREEN_CrudePrev:COREM_CrudePrev + 
+    COLON_SCREEN_CrudePrev:COREW_CrudePrev + COLON_SCREEN_CrudePrev:PAPTEST_CrudePrev + 
+    COLON_SCREEN_CrudePrev:TEETHLOST_CrudePrev + COREM_CrudePrev:COREW_CrudePrev + 
+    COREM_CrudePrev:PAPTEST_CrudePrev + COREW_CrudePrev:PAPTEST_CrudePrev + 
+    COREW_CrudePrev:TEETHLOST_CrudePrev + PAPTEST_CrudePrev:TEETHLOST_CrudePrev, data = df_sample)
+
+summary(boxcox_sample_interactions)
+plot(boxcox_sample_interactions)
+bptest(boxcox_sample_interactions)
+```
+
+
+
+
+
+
+
+
