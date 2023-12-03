@@ -1,0 +1,99 @@
+---
+title: 'Data 603 Term Project'
+author: "Ethan Scott, James Huvenaars, Connor Horemans"
+date: "2023-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(mctest)
+library(car)
+library(ggplot2)
+library(GGally)
+library(MASS)
+library(mosaic)
+library(lmtest)
+library(olsrr)
+```
+
+# Data 603 Term Project
+
+
+
+
+```{r}
+df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+head(df)
+```
+
+```{r}
+#removing all data but the Cancer crude prevalence and preventative measures. 
+
+#df.calcs = df frame used for calculations. 
+df.calcs <- subset(df, select = c(CANCER_CrudePrev, BINGE_CrudePrev, CSMOKING_CrudePrev, LPA_CrudePrev, OBESITY_CrudePrev, SLEEP_CrudePrev))
+
+head(df.calcs)
+```
+
+```{r}
+additive <- lm(CANCER_CrudePrev ~ ., df.calcs)
+summary(additive)
+```
+```{r}
+imcdiag(additive, method = 'VIF')
+```
+
+```{r}
+vif(additive)
+```
+
+
+```{r}
+additive.interactions <- lm(CANCER_CrudePrev ~ (.)^2, df.calcs)
+summary(additive.interactions)
+```
+```{r}
+plot(additive.interactions)
+```
+
+#log transformation
+
+```{r}
+additive.log <- lm(log(CANCER_CrudePrev) ~ (.)^2, df.calcs)
+summary(additive.log)
+plot(additive.log)
+bptest(additive.log)
+```
+
+Log sucks balls, try boxcox
+
+#boxcox transformation
+
+```{r}
+bc = boxcox(additive.interactions,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+```{r}
+bcmodel=lm((((CANCER_CrudePrev^bestlambda)-1)/bestlambda) ~ (.)^2, df.calcs)
+summary(bcmodel)
+```
+```{r}
+plot(bcmodel)
+bptest(bcmodel)
+```
+
+# square root transformation
+
+```{r}
+additive.sqrt <- lm(sqrt(CANCER_CrudePrev) ~ (.)^2, df.calcs)
+summary(additive.sqrt)
+plot(additive.sqrt)
+bptest(additive.sqrt)
+```
+
+
+
+
