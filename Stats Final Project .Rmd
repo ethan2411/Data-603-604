@@ -356,16 +356,45 @@ interactions.boxcox.bic <- lm(CANCER_boxcox_bic ~ BPMED_CrudePrev + CHECKUP_Crud
 plot(interactions.boxcox.bic)
 ```
 
-### Additive model removing highest VIF value (DENTAL_CrudePrev)
+### VIF
 
 Since we did not satify the assumption of homoscedasticity, return to VIF to remove highest VIF value (DENTAL_CrudePrev)
+
+Starting will full model, removing values where VIF\>5
 
 ```{r}
 library(car)
 vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev  + DENTAL_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
-
-
 ```
+
+```{r}
+#VIF after removing DENTAL_CrudePrev
+vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors))
+```
+
+```{r}
+#then removing TEETHLOST_CrudePrev
+vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev, data = df.unhealthy.precitors))
+```
+
+### FINAL PREDICTORS
+
+```{r}
+#this would be good, no values VIF above 5... should only use these predictors
+#then removing  COREW_CrudePrev
+vif(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev, data = df.unhealthy.precitors))
+```
+
+ANOTHER TEST
+
+```{r}
+library(mctest)
+#imcdiag(cancer.lm, method="VIF")
+#THIS ONE HAS REMOVING 1 VARIABLE AND THATS IT. JUST DENTAL_CrudePrev
+imcdiag(lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + COREW_CrudePrev + PAPTEST_CrudePrev + TEETHLOST_CrudePrev, data = df.unhealthy.precitors), method = 'VIF')
+```
+
+#### idk whats this is below lol
 
 ```{r}
 #removing DENTAL_CrudePrev since it has the highest VIF value
@@ -378,8 +407,6 @@ anova(cancer.lm, additive.nodental)
 ```
 
 We cannot remove DENTAL_CrudePrev since the ANOVA value is less than 0.05. Try removing the variable with the second highest VIF.
-
-### Additive model removing second highest VIF value (TEETHLOST_CrudePrev)
 
 ```{r}
 #removing TEETHLOST_CrudePrev since it has the second highest VIF value, and we cannot remove the term with the highest VIF according to the ANOVA test. 
