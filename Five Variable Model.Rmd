@@ -1,0 +1,252 @@
+---
+title: "5 Variable Model"
+author: "Ethan Scott"
+date: "2023-12-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Data
+
+```{r}
+df = read.csv('https://raw.githubusercontent.com/ethan2411/Data-603-604/main/603%20Data/500_Cities__Census_Tract-level_Data__GIS_Friendly_Format___2019_release_20231106.csv')
+
+
+df.calcs <- subset(df, select =- c(StateAbbr, PlaceName, PlaceFIPS, TractFIPS,Place_TractID,Population2010, ACCESS2_Crude95CI, ARTHRITIS_Crude95CI, BINGE_Crude95CI, BPHIGH_Crude95CI, BPMED_Crude95CI, CANCER_Crude95CI, CASTHMA_Crude95CI, CHD_Crude95CI, CHECKUP_Crude95CI, CHOLSCREEN_Crude95CI, COLON_SCREEN_Crude95CI,COPD_Crude95CI, COREM_Crude95CI, COREW_Crude95CI, CSMOKING_Crude95CI, DENTAL_Crude95CI,DIABETES_Crude95CI,  HIGHCHOL_Crude95CI, KIDNEY_Crude95CI, LPA_Crude95CI, MAMMOUSE_Crude95CI, MHLTH_Crude95CI, OBESITY_Crude95CI, PAPTEST_Crude95CI, PHLTH_Crude95CI, SLEEP_Crude95CI, STROKE_Crude95CI, TEETHLOST_Crude95CI, Geolocation))
+
+df.unhealthy.precitors <- df.calcs <- subset(df.calcs, select =- c(ARTHRITIS_CrudePrev, BPHIGH_CrudePrev, CASTHMA_CrudePrev, CHD_CrudePrev, COPD_CrudePrev, DIABETES_CrudePrev, HIGHCHOL_CrudePrev, KIDNEY_CrudePrev, MAMMOUSE_CrudePrev, MHLTH_CrudePrev, PHLTH_CrudePrev, STROKE_CrudePrev))
+
+cancer.pred.only <- subset(df.unhealthy.precitors,  select =- c(BINGE_CrudePrev, CSMOKING_CrudePrev, LPA_CrudePrev, OBESITY_CrudePrev, SLEEP_CrudePrev))
+cancer.df = na.omit(data.frame(cancer.pred.only))
+head(cancer.df)
+```
+
+## 5 Variable Full Model
+
+```{r}
+reduced = lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev, data = df.unhealthy.precitors)
+summary(reduced)
+```
+
+```{r}
+#assumptions arent good
+plot(reduced)
+```
+
+### Box-Cox Transform
+
+```{r}
+bc = boxcox(reduced,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
+pred5.boxcox = cancer.df %>%
+  mutate(CANCER5_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
+
+head(pred5.boxcox)
+```
+
+```{r}
+reduced.bc = lm(CANCER5_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev, data = pred5.boxcox)
+summary(reduced.bc)
+```
+
+```{r}
+#better not great
+plot(reduced.bc)
+```
+
+### REMOVING OUTLIERS
+
+```{r}
+#outliers
+lev=hatvalues(model_step5)
+p = length(coef(model_step5))
+n = nrow(cancer.pred.only)
+outlier3p = lev[lev>(3*p/n)]
+print("h_I>3p/n, outliers are... lots")
+
+rows_to_remove <- which(lev > (3 * p / n))
+# Remove the specified rows
+no_outliers <- cancer.pred.only[-rows_to_remove, ]
+head(no_outliers)
+nrow(cancer.pred.only)
+nrow(no_outliers)
+```
+
+```{r}
+no_outliers.lm = lm(CANCER_CrudePrev ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev, data = no_outliers)
+summary(no_outliers.lm)
+```
+
+```{r}
+plot(no_outliers.lm)
+```
+
+### BC without Outliers
+
+```{r}
+bc = boxcox(no_outliers.lm,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
+NO.boxcox = no_outliers %>%
+  mutate(CANCER5_boxcox = (CANCER_CrudePrev^bestlambda - 1)/bestlambda)
+
+head(NO.boxcox)
+```
+
+```{r}
+reducedNO.bc = lm(CANCER5_boxcox ~ BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev, data = NO.boxcox)
+summary(reducedNO.bc)
+```
+
+```{r}
+#not great
+plot(reducedNO.bc)
+```
+
+## Interactions Model
+
+```{r}
+inter5 = lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev)^2, data = df.unhealthy.precitors)
+summary(inter5)
+```
+
+```{r}
+plot(inter5)
+```
+
+### Box-Cox Transformation
+
+```{r}
+inter5.bc = lm(CANCER5_boxcox ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev)^2, data = pred5.boxcox)
+summary(inter5.bc)
+```
+
+```{r}
+plot(inter5.bc)
+```
+
+### Variable Selection
+
+```{r}
+model_step5 <- step(inter5.bc, direction = "both")
+```
+
+```{r}
+summary(model_step5)
+```
+
+```{r}
+plot(model_step5)
+```
+
+## Interactions Without Outliers
+
+```{r}
+NO.inter.lm = lm(CANCER_CrudePrev ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev)^2, data = no_outliers)
+summary(NO.inter.lm)
+```
+
+```{r}
+plot(NO.inter.lm)
+```
+
+### BC Interactions Without Outliers
+
+```{r}
+inter5NO.bc = lm(CANCER5_boxcox ~ (BPMED_CrudePrev + CHECKUP_CrudePrev + CHOLSCREEN_CrudePrev + COLON_SCREEN_CrudePrev + COREM_CrudePrev + PAPTEST_CrudePrev)^2, data = NO.boxcox)
+summary(inter5NO.bc)
+```
+
+```{r}
+plot(inter5NO.bc)
+```
+
+### Variable Selection
+
+```{r}
+model_step5NO <- step(inter5NO.bc, direction = "both")
+```
+
+```{r}
+summary(model_step5NO)
+```
+
+```{r}
+plot(model_step5NO)
+```
+
+## ALL FINAL MODELS
+
+```{r}
+#############################################
+#Full 5 Variable Model
+#reduced
+#############################################
+#Full Model with BC
+#reduced.bc
+#############################################
+#Full Model without Outliers
+#no_outliers.lm
+#############################################
+#Full Model With Box-Cox without outliers
+#reducedNO.bc
+#############################################
+#Full Interaction Model
+#inter5
+#############################################
+#Interactions with Box-Cox
+#inter5.bc
+#############################################
+#Interactions with Box-Cox and Variable Selection
+#model_step5
+#############################################
+#Full Interactions without Outliers
+#NO.inter.lm
+#############################################
+#Interactions With Box-Cox no Outliers
+#inter5NO.bc
+#############################################
+#Interaction Model Box-Cox without outliers with variable selection
+#model_step5NO
+#############################################
+```
+
+### Models where assumptions are somewhat reasonable
+
+```{r}
+#############################################
+#Interactions with Box-Cox
+#inter5.bc
+#############################################
+#Interactions with Box-Cox and Variable Selection
+#model_step5
+#############################################
+#Interactions With Box-Cox no Outliers
+#inter5NO.bc
+#############################################
+#Interaction Model Box-Cox without outliers with variable selection
+#model_step5NO
+#############################################
+```
+
+## Numerical Tests
+
+```{r}
+#Equal Variances Using BP Test... All not good
+bptest(inter5.bc)
+bptest(model_step5)
+bptest(inter5NO.bc)
+bptest(model_step5NO)
+```
