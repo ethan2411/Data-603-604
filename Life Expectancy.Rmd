@@ -2,6 +2,7 @@
 library(car)
 library(lmtest)
 library(GGally)
+library(olsrr)
 ```
 
 
@@ -11,6 +12,8 @@ LE = read.csv("https://raw.githubusercontent.com/ethan2411/Data-603-604/main/Lif
 LE = na.omit(LE)
 head(LE)
 ```
+
+
 ```{r}
 test.lm <- lm(Life.expectancy ~ factor(Country) + factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling + GDP + Population + thinness..1.19.years, data = LE)
 summary(test.lm)
@@ -198,6 +201,16 @@ plot(sqrt.lm)
 bptest(sqrt.lm)
 ```
 
+
+
+
+
+
+
+
+WORKING WITH THE HEALTH FACTORS ONLY
+
+
 ```{r}
 
 test.lm = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = LE)
@@ -217,22 +230,65 @@ vif(test.lm)
 test.lm2 = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = LE)
 summary(test.lm2)
 
-plot(test.lm2)
 
 ```
 
 ```{r}
 
 
-test.lmint = lm(Life.expectancy ~  (factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = LE)
+test.lmint = lm(Life.expectancy ~ (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = LE)
 summary(test.lmint)
 
+stepmod = ols_step_both_p(test.lmint, pent = 0.1, prem = 0.3, details = TRUE)
+
 test.lmintred = step(test.lmint, method = "BOTH")
+```
+
+```{r}
 
 
+
+summary(stepmod$model)
+summary(test.lmintred)
+
+
+
+stepmod_higher = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + Diphtheria + Polio + Alcohol + BMI + BMI:Polio + Polio:Diphtheria + BMI:Alcohol + HIV.AIDS:BMI + Polio:Alcohol + Hepatitis.B:Alcohol, data = LE)
+
+bptest(stepmod_higher)
+plot(stepmod_higher)
+
+
+library(MASS)
+bc = boxcox(stepmod_higher, lambda=seq(-1,1))
+
+bestlambda = bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+#ggpairs(stepmod_model)
+#vif(test.lmintred)
 
 
 ```
+
+```{r}
+
+bcmodel=lm((((Life.expectancy^0.8383838)-1)/0.8383838) ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + Diphtheria + Polio + Alcohol + BMI + BMI:Polio + Polio:Diphtheria + BMI:Alcohol + HIV.AIDS:BMI + Polio:Alcohol + Hepatitis.B:Alcohol, data = LE)
+summary(bcmodel)
+
+
+bptest(bcmodel)
+plot(bcmodel, which = 4)
+
+```
+
+
+
+
+
+
+
+
 
 ```{r}
 
@@ -355,8 +411,125 @@ ggpairs(test.lm2higher)
 
 
 
+TESTING SOMETHING WITH A FIXED PORTION OF THE DATASET
 
 
+```{r}
+library(dplyr)
+
+developing_LE <- LE %>%
+  filter(Status == "Developing")
+
+```
+
+```{r}
+head(developing_LE)
+nrow(LE)
+nrow(developing_LE)
+
+
+```
+MAKE FIRST MODEL
+```{r}
+
+
+develop_firstlm = lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
+summary(develop_firstlm)
+
+vif(develop_firstlm)
+
+develop_lmred = lm(Life.expectancy ~  Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
+summary(develop_lmred)
+
+anova(develop_firstlm,develop_lmred)
+```
+
+ANOVA ACCEPTS REDUCED MODEL
+
+OLS STEP MODEL
+```{r}
+
+develop_lmintfull = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE)
+summary(develop_lmintfull)
+
+develop_stepmod_intred = ols_step_both_p(develop_lmintfull, pent= 0.1, prem = 0.3, details = TRUE)
+summary(develop_stepmod_intred$model)
+
+```
+
+GGPAIRS FOR OLS STEP MODEL
+```{r}
+
+summary(develop_stepmod_intred_attempt2)
+bptest(develop_stepmod_intred_attempt2)
+
+developing_intred2 = lm(Life.expectancy ~ HIV.AIDS + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
+
+ggpairs(developing_intred2)
+bptest(developing_intred2)
+plot(developing_intred2)
+
+```
+
+HIGHER ORDER OF OUR OLS() STEPMODEL
+```{r}
+developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
+
+summary(developing_highermod)
+bptest(developing_highermod)
+plot(developing_highermod)
+
+
+```
+
+
+FROM ASSUMPTION CHECK WE DO BOXPLOT
+
+```{r}
+bc = boxcox(developing_highermod, lambda=seq(-1,1))
+
+bestlambda = bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+
+```
+
+boxcox is 1 so do nothing
+
+
+
+
+
+
+ATTEMPTING THE SAME ASSUMPTIONS AND HIGHER ORDER WITH MODEL MADE FROM STEP() FUNCTION
+
+
+```{r}
+develop_stepmod_intred_attempt2 = step(develop_lmintfull)
+summary(develop_stepmod_intred_attempt2)
+```
+
+```{r}
+#ggpairs(develop_stepmod_intred_attempt2)
+
+
+develop_stepmod_intred_attempt2HIGHER = lm(Life.expectancy ~ Alcohol + Hepatitis.B  + BMI + Polio + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Alcohol:Hepatitis.B + Alcohol:BMI + Alcohol:Diphtheria + Alcohol:HIV.AIDS + Hepatitis.B:BMI + Hepatitis.B:Diphtheria + BMI:Polio + BMI:Diphtheria + Polio:Diphtheria + Diphtheria:HIV.AIDS, data = developing_LE)
+
+summary(develop_stepmod_intred_attempt2HIGHER)
+bptest(develop_stepmod_intred_attempt2HIGHER)
+plot(develop_stepmod_intred_attempt2HIGHER)
+```
+
+BOXCOX TEST
+```{r}
+bc = boxcox(develop_stepmod_intred_attempt2HIGHER, lambda=seq(-1,1))
+
+bestlambda = bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+
+
+```
 
 
 
