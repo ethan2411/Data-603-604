@@ -217,6 +217,7 @@ vif(test.lm)
 test.lm2 = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = LE)
 summary(test.lm2)
 
+plot(test.lm2)
 
 ```
 
@@ -226,7 +227,9 @@ summary(test.lm2)
 test.lmint = lm(Life.expectancy ~  (factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = LE)
 summary(test.lmint)
 
-test.lmintred = step(test.lmint)
+test.lmintred = step(test.lmint, method = "BOTH")
+
+
 
 
 ```
@@ -241,7 +244,7 @@ summary(test.lmintred)
 ```
 
 ```{r}
-test.lmhigher = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + factor(Status):Alcohol + factor(Status):Hepatitis.B + factor(Status):BMI + factor(Status):Diphtheria + Alcohol:Hepatitis.B + Alcohol:Diphtheria + Alcohol:Hepatitis.B + Alcohol:Diphtheria +  Alcohol:HIV.AIDS + Hepatitis.B:BMI + Hepatitis.B:Diphtheria + BMI:Polio + BMI:Diphtheria + Polio:Diphtheria + Diphtheria:HIV.AIDS, data = LE)
+test.lmhigher = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + factor(Status):Alcohol + factor(Status):Hepatitis.B + factor(Status):BMI + factor(Status):Diphtheria + Alcohol:Hepatitis.B + Alcohol:Diphtheria + Alcohol:Hepatitis.B + Alcohol:Diphtheria +  Alcohol:HIV.AIDS + Hepatitis.B:BMI + Hepatitis.B:Diphtheria + BMI:Polio + BMI:Diphtheria + Polio:Diphtheria + Diphtheria:HIV.AIDS, data = LE) 
 
 bptest(test.lmhigher)
 
@@ -320,9 +323,45 @@ summary(step_model2)
 
 ```{r}
 
-test.lm2higher = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Diphtheria + HIV.AIDS,  data = LE_no_outliers)
+test.lm2higher = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + I(Measles^2) + BMI + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + factor(Status):BMI + factor(Status):Diphtheria + Alcohol:Hepatitis.B + Alcohol:Measles + Alcohol:Diphtheria + Hepatitis.B:Diphtheria + Measles:Diphtheria + Measles:HIV.AIDS + BMI:Diphtheria + Diphtheria:HIV.AIDS,  data = LE_no_outliers)
 
-summary(test.lmhigher)
+summary(test.lm2higher)
+
+bptest(test.lm2higher)
+
+
+shapiro.test(residuals(test.lm2higher))
+
+
+plot(test.lm2higher)
+
+
+bc = boxcox(test.lm2higher, lambda=seq(-1,1))
+
+bestlambda = bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+
 
 ```
+
+```{r}
+ggpairs(test.lm2higher)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
