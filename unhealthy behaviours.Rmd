@@ -114,7 +114,8 @@ summary(additive.log5)
 plot(additive.log5, which = 5)
 bptest(additive.log5)
 anova(additive.log5, additive.log4)
-````
+```
+
 ```{r}
 df.calcs[cooks.distance(additive.log5)>0.5,]
 plot(additive.log5,pch=18,col="red",which=c(4)) #which =4 only prints the cook distance plot. 
