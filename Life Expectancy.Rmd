@@ -235,7 +235,6 @@ summary(test.lm2)
 
 ```{r}
 
-
 test.lmint = lm(Life.expectancy ~ (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = LE)
 summary(test.lmint)
 
@@ -413,6 +412,8 @@ ggpairs(test.lm2higher)
 
 TESTING SOMETHING WITH A FIXED PORTION OF THE DATASET
 
+DEVELOPING ROWS ONLY ONLY ONLY ONLY 
+
 
 ```{r}
 library(dplyr)
@@ -518,6 +519,8 @@ develop_stepmod_intred_attempt2HIGHER = lm(Life.expectancy ~ Alcohol + Hepatitis
 summary(develop_stepmod_intred_attempt2HIGHER)
 bptest(develop_stepmod_intred_attempt2HIGHER)
 plot(develop_stepmod_intred_attempt2HIGHER)
+
+shapiro.test(residuals(develop_stepmod_intred_attempt2HIGHER))
 ```
 
 BOXCOX TEST
@@ -531,8 +534,142 @@ bestlambda
 
 ```
 
+```{r}
+
+lev=hatvalues(develop_stepmod_intred_attempt2)
+p = length(coef(develop_stepmod_intred_attempt2))
+n = nrow(developing_LE)
+outlier2p = lev[lev>(2*p/n)]
+outlier3p = lev[lev>(3*p/n)]
+print("h_I>3p/n, outliers are")
+print(outlier2p)
+
+rows_remove3p = which(lev>(3*p/n))
+print(rows_remove3p)
+
+developing_LE_no_outliersSTEP = developing_LE[-rows_remove3p, ]
+head(developing_LE_no_outliersSTEP)
+
+nrow(developing_LE)
+nrow(developing_LE_no_outliersSTEP)
 
 
+
+```
+TESTING FIT MODEL WITHOUT 3P OUTLIERS 
+make new model then reduce
+```{r}
+
+first3plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
+summary(first3plm)
+
+#reduced model
+red3plm = lm(Life.expectancy ~  Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
+summary(red3plm)
+
+#int model
+int3plm = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE_no_outliersSTEP)
+summary(int3plm)
+
+intred3plm = step(int3plm)
+summary(intred3plm)
+
+
+```
+
+```{r}
+#ggpairs(intred3plm)
+#make higher order model
+higher3plm = lm(Life.expectancy ~ Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + + I(HIV.AIDS^3) + I(HIV.AIDS^4) + I(HIV.AIDS^5) + Alcohol:Hepatitis.B + Alcohol:BMI + Alcohol:Diphtheria + Alcohol:HIV.AIDS + Hepatitis.B:Diphtheria + Hepatitis.B:HIV.AIDS + BMI:Polio + BMI:Diphtheria + Diphtheria:HIV.AIDS, data = developing_LE_no_outliersSTEP)
+
+summary(higher3plm)
+bptest(higher3plm)
+plot(higher3plm)
+
+shapiro.test(residuals(higher3plm))
+
+```
+
+
+
+```{r}
+developing_highermodNOOUTLIER = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE_no_outliersSTEP)
+summary(developing_highermodNOOUTLIER)
+
+bptest(developing_highermodNOOUTLIER)
+plot(developing_highermodNOOUTLIER)
+
+#still gives 1
+#boxcox
+#bc = boxcox(developing_highermodNOOUTLIER,lambda=seq(-1,1))
+#bestlambda=bc$x[which(bc$y==max(bc$y))]
+#bestlambda
+
+```
+
+
+
+
+NOW WE ATTEMPT WITH 2p OUTLIERS TO SEE IF ITS BETTER
+
+```{r}
+lev=hatvalues(develop_stepmod_intred_attempt2)
+p = length(coef(develop_stepmod_intred_attempt2))
+n = nrow(developing_LE)
+outlier2p = lev[lev>(2*p/n)]
+outlier3p = lev[lev>(3*p/n)]
+print("h_I>3p/n, outliers are")
+print(outlier2p)
+
+rows_remove2p = which(lev>(2*p/n))
+print(rows_remove2p)
+
+developing_LE_no_outliersSTEP2P = developing_LE[-rows_remove2p, ]
+head(developing_LE_no_outliersSTEP2P)
+
+nrow(developing_LE)
+nrow(developing_LE_no_outliersSTEP2P)
+```
+
+
+2P FIRST MODEL
+```{r}
+first2plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
+summary(first2plm)
+
+#reduced model
+red2plm = lm(Life.expectancy ~  Alcohol + Hepatitis.B + Measles + BMI + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
+summary(red2plm)
+
+#int model
+int2plm = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + Measles + BMI + Diphtheria + HIV.AIDS)^2, data = developing_LE_no_outliersSTEP2P)
+summary(int2plm)
+
+intred2plm = step(int2plm)
+summary(intred2plm)
+
+
+```
+
+
+MAKE HIGHER ORDER 2P MODEL
+```{r}
+#ggpairs(intred2plm)
+#make higher order model
+higher2plm = lm(Life.expectancy ~ Alcohol + Hepatitis.B + Measles + BMI + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Alcohol:Hepatitis.B + Alcohol:Measles + Alcohol:BMI + Alcohol:Diphtheria + Alcohol:HIV.AIDS + Hepatitis.B:Diphtheria + Measles:Diphtheria + Measles:HIV.AIDS + BMI:Diphtheria + Diphtheria:HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
+
+summary(higher2plm)
+bptest(higher2plm)
+plot(higher2plm)
+
+shapiro.test(residuals(higher2plm))
+
+#boxcox
+bc = boxcox(higher2plm,lambda=seq(-1,1))
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+```
 
 
 
