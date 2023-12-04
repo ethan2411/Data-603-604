@@ -1,0 +1,165 @@
+```{r}
+library(car)
+library(GGally)
+library(lmtest)
+library(Ecdat)
+library(MASS)
+library(dplyr)
+```
+
+
+
+```{r}
+life_exp = read.csv("Life Expectancy Data.csv")
+head(life_exp)
+
+
+```
+
+
+
+```{r}
+fullmodel = lm(Life.expectancy ~  Status + Adult.Mortality + Alcohol + percentage.expenditure + Hepatitis.B + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + Population + thinness.5.9.years + Income.composition.of.resources + Schooling, data = life_exp)
+
+vif(fullmodel)
+
+```
+
+```{r}
+
+summary(fullmodel)
+```
+
+```{r}
+reducedmodel = lm(Life.expectancy ~  Status + Adult.Mortality + Alcohol + percentage.expenditure + BMI + under.five.deaths + Polio + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling, data = life_exp)
+
+summary(reducedmodel)
+
+```
+
+
+```{r}
+intmodel = lm(Life.expectancy ~  (Status + Adult.Mortality + Alcohol + percentage.expenditure + BMI + under.five.deaths + Polio + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling)^2, data = life_exp)
+
+
+
+summary(intmodel)
+
+
+stepintreduced = step(intmodel)
+
+summary(stepintreduced)
+
+```
+
+```{r}
+ggpairs(stepintreduced)
+
+
+```
+
+
+
+
+```{r}
+bptest(stepintreduced)
+
+shapiro.test(residuals(stepintreduced))
+
+
+```
+
+```{r}
+plot(stepintreduced)
+
+
+```
+
+
+```{r}
+
+bc=boxcox(stepintreduced,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+```
+
+```{r}
+life.boxcox = life_exp %>%
+  mutate(LIFE_boxcox = (Life.expectancy^bestlambda - 1)/bestlambda)
+
+head(life.boxcox)
+
+```
+
+```{r}
+lev=hatvalues(stepintreduced)
+p = length(coef(stepintreduced))
+n = nrow(life_exp)
+outlier3p = lev[lev>(3*p/n)]
+print("h_I>3p/n, outliers are")
+print(outlier3p)
+
+row_numbers = which(lev > (3*p/n))
+print(row_numbers)
+
+print(life_exp)
+
+life_exp.filtered = life_exp[-row_numbers, ]
+
+print(life_exp.filtered)
+```
+
+
+```{r}
+
+fullmodel2 = lm(Life.expectancy ~  Status + Adult.Mortality + Alcohol + percentage.expenditure + Hepatitis.B + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + Population + thinness.5.9.years + Income.composition.of.resources + Schooling, data = life_exp.filtered)
+
+vif(fullmodel2)
+
+summary(fullmodel2)
+
+reducedmodel2 = lm(Life.expectancy ~  Status + Adult.Mortality + Alcohol + percentage.expenditure + BMI + under.five.deaths + Polio + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling, data = life_exp.filtered)
+
+summary(reducedmodel2)
+
+
+```
+
+```{r}
+
+intfull2 = lm(Life.expectancy ~  (Status + Adult.Mortality + Alcohol + percentage.expenditure + BMI + under.five.deaths + Polio + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling)^2, data = life_exp.filtered)
+
+summary(intfull2)
+
+intred2 = step(intfull2)
+
+summary(intred2)
+
+```
+
+```{r}
+
+bptest(intred2)
+
+shapiro.test(residuals(intred2))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
