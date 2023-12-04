@@ -582,6 +582,9 @@ summary(intred3plm)
 #make higher order model
 higher3plm = lm(Life.expectancy ~ Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + + I(HIV.AIDS^3) + I(HIV.AIDS^4) + I(HIV.AIDS^5) + Alcohol:Hepatitis.B + Alcohol:BMI + Alcohol:Diphtheria + Alcohol:HIV.AIDS + Hepatitis.B:Diphtheria + Hepatitis.B:HIV.AIDS + BMI:Polio + BMI:Diphtheria + Diphtheria:HIV.AIDS, data = developing_LE_no_outliersSTEP)
 
+#anova accepts higher order model
+anova(higher3plm,intred3plm)
+
 summary(higher3plm)
 bptest(higher3plm)
 plot(higher3plm)
