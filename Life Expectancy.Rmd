@@ -1,0 +1,77 @@
+```{r}
+library(car)
+library(lmtest)
+```
+
+
+
+```{r}
+LE = read.csv("Life Expectancy Data.csv")
+LE = na.omit(LE)
+head(LE)
+```
+```{r}
+test.lm <- lm(Life.expectancy ~ factor(Country) + factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling + GDP + Population + thinness..1.19.years, data = LE)
+summary(test.lm)
+vif(test.lm)
+```
+
+```{r}
+LE2 = subset(LE, select =- c(Year, Country))
+LE2 = na.omit(LE2)
+head(LE2)
+````
+
+```{r}
+LE.lm <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling + GDP + Population + thinness..1.19.years, data = LE2)
+summary(LE.lm)
+```
+
+REMOVING GDP, Population, and thinness 1-19 (to see if that's chill)
+```{r}
+LE.reduced <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.reduced)
+anova(LE.lm, LE.reduced)
+```
+REMOVE MEASLES Hepatitis b, and Polio
+
+```{r}
+LE.reduced2 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + BMI + under.five.deaths + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.reduced2)
+anova(LE.reduced2, LE.reduced)
+```
+remove total expenditure 
+
+```{r}
+LE.reduced3 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + BMI + under.five.deaths + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.reduced3)
+anova(LE.reduced3, LE.reduced)
+```
+```{r}
+plot(LE.reduced3)
+```
+```{r}
+bptest(LE.reduced3)
+shapiro.test(LE2$Life.expectancy)
+```
+```{r}
+vif(LE.reduced3)
+```
+
+DROPPING THE FUCK OUT OF under.five.deaths
+
+```{r}
+LE.reduced4 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.reduced4)
+vif(LE.reduced4)
+```
+
+```{r}
+LE.reduced5 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.reduced5)
+```
+
+```{r}
+
+plot(LE.reduced5)
+```
