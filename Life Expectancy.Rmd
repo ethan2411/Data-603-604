@@ -1,6 +1,7 @@
 ```{r}
 library(car)
 library(lmtest)
+library(GGally)
 ```
 
 
@@ -19,7 +20,7 @@ summary(test.lm)
 LE2 = subset(LE, select =- c(Year, Country))
 LE2 = na.omit(LE2)
 head(LE2)
-````
+```
 
 ```{r}
 LE.lm <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling + GDP + Population + thinness..1.19.years, data = LE2)
@@ -197,5 +198,131 @@ plot(sqrt.lm)
 bptest(sqrt.lm)
 ```
 
+```{r}
 
+test.lm = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = LE)
+summary(test.lm)
+
+```
+
+```{r}
+
+vif(test.lm)
+
+
+```
+
+```{r}
+
+test.lm2 = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = LE)
+summary(test.lm2)
+
+
+```
+
+```{r}
+
+
+test.lmint = lm(Life.expectancy ~  (factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = LE)
+summary(test.lmint)
+
+test.lmintred = step(test.lmint)
+
+
+```
+
+```{r}
+
+
+
+summary(test.lmintred)
+
+
+```
+
+```{r}
+test.lmhigher = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + factor(Status):Alcohol + factor(Status):Hepatitis.B + factor(Status):BMI + factor(Status):Diphtheria + Alcohol:Hepatitis.B + Alcohol:Diphtheria + Alcohol:Hepatitis.B + Alcohol:Diphtheria +  Alcohol:HIV.AIDS + Hepatitis.B:BMI + Hepatitis.B:Diphtheria + BMI:Polio + BMI:Diphtheria + Polio:Diphtheria + Diphtheria:HIV.AIDS, data = LE)
+
+bptest(test.lmhigher)
+
+anova(test.lmhigher, test.lmintred)
+```
+
+
+
+
+```{r}
+ggpairs(test.lmintred)
+
+```
+
+
+```{r}
+plot(test.lmhigher)
+
+summary(test.lmhigher)
+
+```
+
+```{r}
+library(MASS)
+bc = boxcox(test.lmhigher, lambda=seq(-1,1))
+
+bestlambda = bc$x[which(bc$y==max(bc$y))]
+bestlambda
+
+
+```
+
+
+```{r}
+lev=hatvalues(test.lmhigher)
+p = length(coef(test.lmhigher))
+n = nrow(LE)
+outlier2p = lev[lev>(2*p/n)]
+outlier3p = lev[lev>(3*p/n)]
+print("h_I>3p/n, outliers are")
+print(outlier2p)
+
+rows_remove = which(lev>(2*p/n))
+print(outlier2plist)
+
+LE_no_outliers = LE[-rows_remove, ]
+head(LE_no_outliers)
+
+nrow(LE)
+nrow(LE_no_outliers)
+```
+
+```{r}
+test.lm2 = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = LE_no_outliers)
+summary(test.lm2)
+
+
+
+```
+
+```{r}
+
+test.lm2red = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Diphtheria + HIV.AIDS, data = LE_no_outliers)
+summary(test.lm2red)
+
+```
+
+```{r}
+test.lm2int = lm(Life.expectancy ~  (factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Diphtheria + HIV.AIDS)^2, data = LE_no_outliers)
+summary(test.lm2int)
+
+step_model2 = step(test.lm2int)
+summary(step_model2)
+
+```
+
+```{r}
+
+test.lm2higher = lm(Life.expectancy ~  factor(Status) + Alcohol + Hepatitis.B  + Measles + BMI + Diphtheria + HIV.AIDS,  data = LE_no_outliers)
+
+summary(test.lmhigher)
+
+```
 
