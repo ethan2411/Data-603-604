@@ -74,6 +74,52 @@ summary(LE.reduced5)
 plot(LE.reduced5)
 ```
 
+#Checking for higher order variables
+
+```{r}
+#making dataframe with only variables we're using for the regression. 
+LE3 <- subset(LE2, select = c(Adult.Mortality, Alcohol, percentage.expenditure, BMI, infant.deaths, Diphtheria, HIV.AIDS, Income.composition.of.resources, Schooling, Life.expectancy))
+```
+
+
+```{r}
+pairs(LE3)
+```
+
+
+AIDS looks to be higher order 
+
+```{r}
+LE.power <- lm(Life.expectancy ~ factor(Status)  + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + poly(HIV.AIDS,5) + Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.power)
+bptest(LE.power)
+plot(LE.power)
+```
+
+REMOVE ALCOHOL
+
+```{r}
+LE.power2 <- lm(Life.expectancy ~ factor(Status)  + Adult.Mortality + percentage.expenditure + BMI + infant.deaths + Diphtheria + poly(HIV.AIDS,5) + Income.composition.of.resources + Schooling , data = LE2)
+summary(LE.power2)
+bptest(LE.power2)
+plot(LE.power2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #Making an interactions model
 
 ```{r}
@@ -81,12 +127,74 @@ LE.interactions <- lm(Life.expectancy ~ (factor(Status) + Adult.Mortality + Alco
 summary(LE.interactions)
 ```
 
-DROPPING all values that are not statistically significant
+
+#Using stepwise to reduce the model
+```{r}
+model_step = step(LE.interactions, direction = "both")
+summary(model_step)
+```
+```{r}
+summary(model_step)
+plot(model_step)
+bptest(model_step)
+```
+
+#LOG transformation
 
 ```{r}
-LE.interactions2 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling + factor(Status)Developing:Adult.Mortality + factor(Status)Developing:Alcohol  + factor(Status)Developing:percentage.expenditure  + factor(Status)Developing:BMI + factor(Status)Developing:Income.composition.of.resources + factor(Status)Developing:Schooling + Adult.Mortality:Alcohol  + Adult.Mortality:BMI + Adult.Mortality:infant.deaths + Adult.Mortality:HIV.AIDS  + Adult.Mortality:Income.composition.of.resources + Adult.Mortality:Schooling  + Alcohol:percentage.expenditure+ Alcohol:HIV.AIDS + percentage.expenditure:infant.deaths +  percentage.expenditure:Income.composition.of.resources + BMI:Diphtheria  + BMI:HIV.AIDS + infant.deaths:Income.composition.of.resources + infant.deaths:Schooling + HIV.AIDS:Schooling  + Diphtheria:Schooling + Diphtheria:Income.composition.of.resources, data = LE2)
-summary(LE.interactions2)
-anova(LE.interactions, LE.interactions2)
+log.lm <- lm(log(Life.expectancy) ~ factor(Status) + Adult.Mortality + 
+    Alcohol + percentage.expenditure + BMI + infant.deaths + 
+    Diphtheria + HIV.AIDS + Income.composition.of.resources + 
+    Schooling + factor(Status):Adult.Mortality + factor(Status):Alcohol + 
+    factor(Status):percentage.expenditure + factor(Status):BMI + 
+    factor(Status):Income.composition.of.resources + factor(Status):Schooling + 
+    Adult.Mortality:Alcohol + Adult.Mortality:BMI + Adult.Mortality:infant.deaths + 
+    Adult.Mortality:Diphtheria + Adult.Mortality:HIV.AIDS + Adult.Mortality:Income.composition.of.resources + 
+    Adult.Mortality:Schooling + Alcohol:percentage.expenditure + 
+    Alcohol:HIV.AIDS + Alcohol:Income.composition.of.resources + 
+    Alcohol:Schooling + percentage.expenditure:infant.deaths + 
+    percentage.expenditure:Income.composition.of.resources + 
+    percentage.expenditure:Schooling + BMI:infant.deaths + BMI:Diphtheria + 
+    BMI:Income.composition.of.resources + BMI:Schooling + infant.deaths:Diphtheria + 
+    infant.deaths:Income.composition.of.resources + infant.deaths:Schooling + 
+    Diphtheria:Income.composition.of.resources + Diphtheria:Schooling + 
+    HIV.AIDS:Schooling, data = LE2)
+
+summary(log.lm)
+plot(log.lm)
+bptest(log.lm)
+```
+
+```{r}
+library(MASS)
+bc = boxcox(model_step,lambda=seq(-1,1))
+
+bestlambda=bc$x[which(bc$y==max(bc$y))]
+bestlambda
+```
+
+```{r}
+sqrt.lm <- lm(sqrt(Life.expectancy) ~ factor(Status) + Adult.Mortality + 
+    Alcohol + percentage.expenditure + BMI + infant.deaths + 
+    Diphtheria + HIV.AIDS + Income.composition.of.resources + 
+    Schooling + factor(Status):Adult.Mortality + factor(Status):Alcohol + 
+    factor(Status):percentage.expenditure + factor(Status):BMI + 
+    factor(Status):Income.composition.of.resources + factor(Status):Schooling + 
+    Adult.Mortality:Alcohol + Adult.Mortality:BMI + Adult.Mortality:infant.deaths + 
+    Adult.Mortality:Diphtheria + Adult.Mortality:HIV.AIDS + Adult.Mortality:Income.composition.of.resources + 
+    Adult.Mortality:Schooling + Alcohol:percentage.expenditure + 
+    Alcohol:HIV.AIDS + Alcohol:Income.composition.of.resources + 
+    Alcohol:Schooling + percentage.expenditure:infant.deaths + 
+    percentage.expenditure:Income.composition.of.resources + 
+    percentage.expenditure:Schooling + BMI:infant.deaths + BMI:Diphtheria + 
+    BMI:Income.composition.of.resources + BMI:Schooling + infant.deaths:Diphtheria + 
+    infant.deaths:Income.composition.of.resources + infant.deaths:Schooling + 
+    Diphtheria:Income.composition.of.resources + Diphtheria:Schooling + 
+    HIV.AIDS:Schooling, data = LE2)
+
+summary(sqrt.lm)
+plot(sqrt.lm)
+bptest(sqrt.lm)
 ```
 
 
