@@ -6,14 +6,13 @@ library(lmtest)
 
 
 ```{r}
-LE = read.csv("Life Expectancy Data.csv")
+LE = read.csv("https://raw.githubusercontent.com/ethan2411/Data-603-604/main/Life%20Expectancy%20Data.csv")
 LE = na.omit(LE)
 head(LE)
 ```
 ```{r}
 test.lm <- lm(Life.expectancy ~ factor(Country) + factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling + GDP + Population + thinness..1.19.years, data = LE)
 summary(test.lm)
-vif(test.lm)
 ```
 
 ```{r}
@@ -72,6 +71,23 @@ summary(LE.reduced5)
 ```
 
 ```{r}
-
 plot(LE.reduced5)
 ```
+
+#Making an interactions model
+
+```{r}
+LE.interactions <- lm(Life.expectancy ~ (factor(Status) + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling)^2, data = LE2)
+summary(LE.interactions)
+```
+
+DROPPING all values that are not statistically significant
+
+```{r}
+LE.interactions2 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + HIV.AIDS + Income.composition.of.resources + Schooling + factor(Status)Developing:Adult.Mortality + factor(Status)Developing:Alcohol  + factor(Status)Developing:percentage.expenditure  + factor(Status)Developing:BMI + factor(Status)Developing:Income.composition.of.resources + factor(Status)Developing:Schooling + Adult.Mortality:Alcohol  + Adult.Mortality:BMI + Adult.Mortality:infant.deaths + Adult.Mortality:HIV.AIDS  + Adult.Mortality:Income.composition.of.resources + Adult.Mortality:Schooling  + Alcohol:percentage.expenditure+ Alcohol:HIV.AIDS + percentage.expenditure:infant.deaths +  percentage.expenditure:Income.composition.of.resources + BMI:Diphtheria  + BMI:HIV.AIDS + infant.deaths:Income.composition.of.resources + infant.deaths:Schooling + HIV.AIDS:Schooling  + Diphtheria:Schooling + Diphtheria:Income.composition.of.resources, data = LE2)
+summary(LE.interactions2)
+anova(LE.interactions, LE.interactions2)
+```
+
+
+
