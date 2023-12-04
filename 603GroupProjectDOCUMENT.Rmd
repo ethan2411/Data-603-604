@@ -68,7 +68,7 @@ vif(cancer.lm4)
 
 NO MORE TO DROP. USE THIS MODEL
 
-NOW USE t-test TO SEE IF YOU CAN DROP ANY VARIABLES
+NOW USE t-test TO SEE IF YOU CAN DROP ANY VARIABLES FROM THE 7 VARIABLE MODEL
 
 ```{r}
 summary(cancer.lm4)
@@ -112,9 +112,20 @@ ANOVA LETS US ACCEPT REDUCED INT MODEL
 NOW ONTO MULTIPLE REGRESSIONS ASSUMPTIONS 
 
 
-
+We will first start with linearity assumption and if we do not meet this assumption we will add higher powers
 
 LINEARITY:
+
+We check to see if there is linearity
+
+```{r}
+plot(cancerintreduced, which = 1)
+
+```
+
+
+Now we check the plots of the data to see where relationships are present and what powers we need to add
+
 ```{r}
 ggpairs(cancerintreduced, lower = list(continuous = "smooth_loess", combo = "facethist", discrete = "facetbar", na = "na"))
 
@@ -123,26 +134,79 @@ ggpairs(cancerintreduced, lower = list(continuous = "smooth_loess", combo = "fac
 
 Independence:
 
+WE ASSUME INDEPENDENCE IS GOOD SO NO NEED TO TEST
+
+Equal Variance:
+
+```{r}
+#residual vs fitted plot and scale location plot
+plot(cancerintreduced, which = 1)
+plot(cancerintreduced, which = 3)
+
+```
+
+test for normality
+```{r}
+
+bptest(cancerintreduced)
+
+```
+
 
 
 Normality:
 
+histogram:
+```{r}
+ggplot(data=cancer.df, aes(residuals(cancerintreduced))) + 
+  geom_histogram(breaks = seq(-20,20,by=0.1), col="green3", fill="green4") + 
+  labs(title="Histogram for residuals") +
+  labs(x="residuals", y="Count")
+```
 
 
-Equal variance:
+QQ plot
+```{r}
+plot(cancerintreduced, which = 2)
+```
 
+
+Shapiro Wilk test
+```{r}
+shapiro.test(cancerintreduced)
+```
 
 
 Multicollinearity:
 
-
+double check multicolin of the variables w/out interactions
+```{r}
+vif(cancer.lm4)
+```
 
 
 Outliers:
 
+Residual vs leverage plot
+```{r}
+plot(cancerintreduced, which = 5)
+```
 
 
+Summary of assumptions and what to do next:
 
+Linearity assumption is ___ met
+
+
+Normality assumption is ___ met
+
+
+Equal variance assumption is ____ met
+
+There are ____ outliers present
+
+
+SO next, we will do _____
 
 
 
