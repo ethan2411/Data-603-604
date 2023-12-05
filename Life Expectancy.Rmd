@@ -478,9 +478,75 @@ anova(developing_highermod, developing_intred2)
 #CHECK ASSUMPTIONS OF HIGHER ORDER MODEL
 summary(developing_highermod)
 bptest(developing_highermod)
+shapiro.test(developing_highermod$residuals)
 plot(developing_highermod)
 
 
+```
+
+```{r}
+lev=hatvalues(developing_highermod)
+p = length(coef(developing_highermod))
+n = nrow(developing_LE)
+
+
+par(mfrow = c(1,2))
+plot(developing_highermod, which = 4)
+plot(rownames(developing_LE),lev, main = "Leverage in Dataset", xlab="observation",
+ylab = "Leverage Value")
+abline(h = 2 *p/n, lty = 1)
+abline(h = 3 *p/n, lty = 1)
+```
+
+```{r}
+library(ggplot2)
+
+# Residuals vs Fitted Values Plot
+ggplot(data.frame(residuals = residuals(developing_highermod), fitted = fitted(developing_highermod)), aes(x = fitted, y = residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE, color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted Values",
+       y = "Residuals")
+
+# Scale-Location (Spread-Location) Plot
+ggplot(data.frame(fitted = fitted(developing_highermod), std_resid = sqrt(abs(rstandard(developing_highermod)))), aes(x = fitted, y = std_resid)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE, color = "red") +
+  labs(title = "Scale-Location Plot",
+       x = "Fitted Values",
+       y = "Square Root of Standardized Residuals")
+
+# Residuals vs Leverage Plot
+ggplot(data.frame(hat_values = hatvalues(developing_highermod), std_resid = rstandard(developing_highermod)), aes(x = hat_values, y = std_resid)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE, color = "red") +
+  labs(title = "Residuals vs Leverage",
+       x = "Leverage",
+       y = "Standardized Residuals")
+```
+
+```{r}
+library(patchwork)
+
+# Normal Q-Q Plot
+qq_plot <- ggplot(data.frame(std_resid = rstandard(developing_highermod)), aes(sample = std_resid)) +
+  geom_qq() +
+  geom_qq_line() +
+  labs(title = "Normal Q-Q Plot")
+
+# Histogram of Residuals
+hist_plot <- ggplot(data = developing_highermod, aes(x = developing_highermod$residuals)) +
+  geom_histogram(binwidth = 0.5, fill = 'blue', col = 'red') +
+  labs(title = "Histogram of Residuals")+
+  xlab("Residuals") +
+  ylab("Count")
+
+# Combine plots using patchwork
+combined_plot <- qq_plot + hist_plot
+
+# Display the combined plot
+combined_plot
 ```
 
 ### FROM ASSUMPTION CHECKS WE DO BOXCOX
