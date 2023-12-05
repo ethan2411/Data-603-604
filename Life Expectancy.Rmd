@@ -1,8 +1,3 @@
-
-
-
-
-
 ```{r}
 test.lm <- lm(Life.expectancy ~ factor(Country) + factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling + GDP + Population + thinness..1.19.years, data = LE)
 summary(test.lm)
@@ -20,11 +15,13 @@ summary(LE.lm)
 ```
 
 REMOVING GDP, Population, and thinness 1-19 (to see if that's chill)
+
 ```{r}
 LE.reduced <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + Hepatitis.B  + Measles + BMI + under.five.deaths + Polio + Total.expenditure + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling , data = LE2)
 summary(LE.reduced)
 anova(LE.lm, LE.reduced)
 ```
+
 REMOVE MEASLES Hepatitis b, and Polio
 
 ```{r}
@@ -32,20 +29,24 @@ LE.reduced2 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.de
 summary(LE.reduced2)
 anova(LE.reduced2, LE.reduced)
 ```
-remove total expenditure 
+
+remove total expenditure
 
 ```{r}
 LE.reduced3 <- lm(Life.expectancy ~ factor(Status) + Adult.Mortality + infant.deaths + Alcohol + percentage.expenditure + BMI + under.five.deaths + Diphtheria + HIV.AIDS + thinness.5.9.years+ Income.composition.of.resources + Schooling , data = LE2)
 summary(LE.reduced3)
 anova(LE.reduced3, LE.reduced)
 ```
+
 ```{r}
 plot(LE.reduced3)
 ```
+
 ```{r}
 bptest(LE.reduced3)
 shapiro.test(LE2$Life.expectancy)
 ```
+
 ```{r}
 vif(LE.reduced3)
 ```
@@ -74,13 +75,11 @@ plot(LE.reduced5)
 LE3 <- subset(LE2, select = c(Adult.Mortality, Alcohol, percentage.expenditure, BMI, infant.deaths, Diphtheria, HIV.AIDS, Income.composition.of.resources, Schooling, Life.expectancy))
 ```
 
-
 ```{r}
 pairs(LE3)
 ```
 
-
-AIDS looks to be higher order 
+AIDS looks to be higher order
 
 ```{r}
 LE.power <- lm(Life.expectancy ~ factor(Status)  + Adult.Mortality + Alcohol + percentage.expenditure + BMI + infant.deaths + Diphtheria + poly(HIV.AIDS,5) + Income.composition.of.resources + Schooling , data = LE2)
@@ -98,21 +97,6 @@ bptest(LE.power2)
 plot(LE.power2)
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #Making an interactions model
 
 ```{r}
@@ -120,12 +104,13 @@ LE.interactions <- lm(Life.expectancy ~ (factor(Status) + Adult.Mortality + Alco
 summary(LE.interactions)
 ```
 
-
 #Using stepwise to reduce the model
+
 ```{r}
 model_step = step(LE.interactions, direction = "both")
 summary(model_step)
 ```
+
 ```{r}
 summary(model_step)
 plot(model_step)
@@ -190,15 +175,7 @@ plot(sqrt.lm)
 bptest(sqrt.lm)
 ```
 
-
-
-
-
-
-
-
 WORKING WITH THE HEALTH FACTORS ONLY
-
 
 ```{r}
 
@@ -270,14 +247,6 @@ plot(bcmodel, which = 4)
 
 ```
 
-
-
-
-
-
-
-
-
 ```{r}
 
 
@@ -295,14 +264,10 @@ bptest(test.lmhigher)
 anova(test.lmhigher, test.lmintred)
 ```
 
-
-
-
 ```{r}
 ggpairs(test.lmintred)
 
 ```
-
 
 ```{r}
 plot(test.lmhigher)
@@ -320,7 +285,6 @@ bestlambda
 
 
 ```
-
 
 ```{r}
 lev=hatvalues(test.lmhigher)
@@ -395,31 +359,33 @@ ggpairs(test.lm2higher)
 
 ```
 
-
-
-
-
-
-DATA 603 Final Project R CODE
+# DATA 603 Final Project R CODE
 
 This file contains all of our R code for the project. It contains our model building process in the order of these steps:
 
-1. Building our first/initial model and doing a full F test.
-2. Checking for multicollinearity and removing variables which have a VIF > 5
-3. Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
-4. Adding interactions to the model and using partial F-test to confirm the interaction model is significant
-5. Reducing the interaction model via stepwise selection
-5. Checking plots between response variable and predictor variables to determine if higher powers need to be present
-6. Adding higher powers and using partial F-test to confirm the hgher power model is significiant
+1.  Building our first/initial model and doing a full F test.
 
-7. Checking the assumptions of the final model
-8. Doing various techniques if the model does not meet assumptions (boxcox transformation and removal of outliers)
-9. rebuilding the models from the techniques done above and check if the new model meets assumptions better vs the other model. 
+2.  Checking for multicollinearity and removing variables which have a VIF \> 5
 
-10. Choosing the best final model within the scope of this course
-11. Interpreting beta coefficients
+3.  Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
 
+4.  Adding interactions to the model and using partial F-test to confirm the interaction model is significant
 
+5.  Reducing the interaction model via stepwise selection
+
+6.  Checking plots between response variable and predictor variables to determine if higher powers need to be present
+
+7.  Adding higher powers and using partial F-test to confirm the hgher power model is significiant
+
+8.  Checking the assumptions of the final model
+
+9.  Doing various techniques if the model does not meet assumptions (boxcox transformation and removal of outliers)
+
+10. rebuilding the models from the techniques done above and check if the new model meets assumptions better vs the other model.
+
+11. Choosing the best final model within the scope of this course
+
+12. Interpreting beta coefficients
 
 First we loaded in our dataset, removed na values and filtered for only rows that were considered "developing" countries based off of the column Status (states if a row is a devoloped or non-developed country). We filtered for these rows since our project only focuses on developing countries. We also loaded in any libraries we planned on using.
 
@@ -439,7 +405,6 @@ LE = na.omit(LE)
 head(LE)
 ```
 
-
 ```{r}
 #select for "developing" rows based on Status column
 developing_LE <- LE %>%
@@ -449,7 +414,8 @@ nrow(developing_LE)
 head(developing_LE)
 ```
 
-1. Building our first/initial model and doing a full F test.
+### Building our first/initial model and doing a full F test.
+
 ```{r}
 
 #make first model
@@ -470,7 +436,8 @@ anova(develop_firstlm,develop_lmred)
 
 ANOVA ACCEPTS REDUCED MODEL
 
-OLS STEP MODEL
+### OLS STEP MODEL
+
 ```{r}
 #make full interaction model
 develop_lmintfull = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE)
@@ -478,12 +445,13 @@ summary(develop_lmintfull)
 
 
 #reduce interaction model via ols stepwise because there are too many interactions to do it manually
-develop_stepmod_intred = ols_step_both_p(develop_lmintfull, pent= 0.1, prem = 0.3, details = TRUE)
+develop_stepmod_intred = ols_step_both_p(develop_lmintfull, pent= 0.1, prem = 0.3, details = FALSE)
 summary(develop_stepmod_intred$model)
 
 ```
 
-GGPAIRS FOR OLS STEP MODEL
+### GGPAIRS FOR OLS STEP MODEL
+
 ```{r}
 
 #code in the reduced interaction model from stepwise
@@ -498,7 +466,8 @@ anova(develop_firstlm, developing_intred2)
 
 ```
 
-HIGHER ORDER OF OUR OLS() STEPMODEL
+### HIGHER ORDER OF OUR OLS() STEPMODEL
+
 ```{r}
 developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
 
@@ -514,8 +483,7 @@ plot(developing_highermod)
 
 ```
 
-
-FROM ASSUMPTION CHECKS WE DO BOXCOX
+### FROM ASSUMPTION CHECKS WE DO BOXCOX
 
 ```{r}
 bc = boxcox(developing_highermod, lambda=seq(-1,1))
@@ -528,10 +496,7 @@ bestlambda
 
 boxcox is 1 so do nothing
 
-
-
-OUTLIER CHECK WITH OLS_STEP MODEL SINCE WE ARE USING THIS STEPWISE REGRESSION
-
+### OUTLIER CHECK WITH OLS_STEP MODEL SINCE WE ARE USING THIS STEPWISE REGRESSION
 
 ```{r}
 
@@ -553,9 +518,8 @@ nrow(developing_LE)
 nrow(developing_LE_no_outliersSTEP)
 ```
 
+### TESTING FIT MODEL WITHOUT 3P OUTLIERS make new model then reduce
 
-TESTING FIT MODEL WITHOUT 3P OUTLIERS 
-make new model then reduce
 ```{r}
 
 first3plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
@@ -606,11 +570,7 @@ plot(higher3plm)
 
 ```
 
-
-
-
-
-NOW WE ATTEMPT WITH 2p OUTLIERS TO SEE IF ITS BETTER
+### NOW WE ATTEMPT WITH 2p OUTLIERS TO SEE IF ITS BETTER
 
 ```{r}
 lev=hatvalues(developing_highermod)
@@ -631,8 +591,8 @@ nrow(developing_LE)
 nrow(developing_LE_no_outliersSTEP2P)
 ```
 
-
 2P FIRST MODEL
+
 ```{r}
 first2plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
 summary(first2plm)
@@ -653,10 +613,8 @@ WHOA WHOA WHOA STOP HERE DO NOT DO THE 2P MODEL. IT REMOVES A PREDICTOR VARIABLE
 
 CAN JUST SAY THAT AFTER CHECKING ASSUMPTIONS FROM THE MODEL WITH OUTLIERS REMOVED OVER THE 3P LEVEL WE DIDNT DO ANY LOWER BECAUSE WE FOUND THAT IT JUST CREATED EVEN WORSE OUTLIERS PRESENT FOR ITS MODEL. SO WE STOPPED THERE AND DIDNT DROP MORE OUTLIERS.
 
+### MAKE HIGHER ORDER 2P MODEL
 
-
-
-MAKE HIGHER ORDER 2P MODEL
 ```{r}
 
 #MAKE NEW MODEL HERE AFTER DOING STEPWISE OLS
@@ -679,8 +637,3 @@ bestlambda=bc$x[which(bc$y==max(bc$y))]
 bestlambda
 
 ```
-
-
-
-
-
