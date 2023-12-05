@@ -469,7 +469,7 @@ anova(develop_firstlm, developing_intred2)
 ### HIGHER ORDER OF OUR OLS() STEPMODEL FINAL MODEL
 
 ```{r}
-developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
+developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
 
 #ANOVA TO TEST IF HIGHER ORDER MODEL IS ACCEPTED. IT IS ACCEPTED
 anova(developing_highermod, developing_intred2)
