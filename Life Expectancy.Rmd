@@ -1,18 +1,6 @@
-```{r}
-library(car)
-library(lmtest)
-library(GGally)
-library(olsrr)
-library(MASS)
-```
 
 
 
-```{r}
-LE = read.csv("https://raw.githubusercontent.com/ethan2411/Data-603-604/main/Life%20Expectancy%20Data.csv")
-LE = na.omit(LE)
-head(LE)
-```
 
 
 ```{r}
@@ -412,34 +400,56 @@ ggpairs(test.lm2higher)
 
 
 
+DATA 603 Final Project R CODE
+
+This file contains all of our R code for the project. It contains our model building process in the order of these steps:
+
+1. Building our first/initial model and doing a full F test.
+2. Checking for multicollinearity and removing variables which have a VIF > 5
+3. Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
+4. Adding interactions to the model and using partial F-test to confirm the interaction model is significant
+5. Reducing the interaction model via stepwise selection
+5. Checking plots between response variable and predictor variables to determine if higher powers need to be present
+6. Adding higher powers and using partial F-test to confirm the hgher power model is significiant
+
+7. Checking the assumptions of the final model
+8. Doing various techniques if the model does not meet assumptions (boxcox transformation and removal of outliers)
+9. rebuilding the models from the techniques done above and check if the new model meets assumptions better vs the other model. 
+
+10. Choosing the best final model within the scope of this course
+11. Interpreting beta coefficients
 
 
 
+First we loaded in our dataset, removed na values and filtered for only rows that were considered "developing" countries based off of the column Status (states if a row is a devoloped or non-developed country). We filtered for these rows since our project only focuses on developing countries. We also loaded in any libraries we planned on using.
 
+```{r}
+library(car)
+library(lmtest)
+library(GGally)
+library(olsrr)
+library(MASS)
+library(dplyr)
+```
 
-
-
-TESTING SOMETHING WITH A FIXED PORTION OF THE DATASET
-
-DEVELOPING ROWS ONLY ONLY ONLY ONLY 
+```{r}
+#read in original csv file and remove na values
+LE = read.csv("https://raw.githubusercontent.com/ethan2411/Data-603-604/main/Life%20Expectancy%20Data.csv")
+LE = na.omit(LE)
+head(LE)
+```
 
 
 ```{r}
-library(dplyr)
-
+#select for "developing" rows based on Status column
 developing_LE <- LE %>%
   filter(Status == "Developing")
-
-```
-
-```{r}
-head(developing_LE)
 nrow(LE)
 nrow(developing_LE)
-
-
+head(developing_LE)
 ```
-MAKE FIRST MODEL
+
+1. Building our first/initial model and doing a full F test.
 ```{r}
 
 #make first model
