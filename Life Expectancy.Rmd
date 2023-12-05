@@ -466,7 +466,7 @@ anova(develop_firstlm, developing_intred2)
 
 ```
 
-### HIGHER ORDER OF OUR OLS() STEPMODEL
+### HIGHER ORDER OF OUR OLS() STEPMODEL FINAL MODEL
 
 ```{r}
 developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + I(HIV.AIDS^4) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
@@ -478,6 +478,7 @@ anova(developing_highermod, developing_intred2)
 #CHECK ASSUMPTIONS OF HIGHER ORDER MODEL
 summary(developing_highermod)
 bptest(developing_highermod)
+shapiro.test(residuals(developing_highermod))
 plot(developing_highermod)
 
 
