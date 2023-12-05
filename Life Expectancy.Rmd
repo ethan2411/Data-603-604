@@ -484,7 +484,7 @@ plot(developing_highermod)
 ```
 
 
-FROM ASSUMPTION CHECK WE DO BOXPLOT
+FROM ASSUMPTION CHECKS WE DO BOXCOX
 
 ```{r}
 bc = boxcox(developing_highermod, lambda=seq(-1,1))
@@ -533,6 +533,12 @@ bestlambda
 
 
 ```
+
+
+
+
+OUTLIER CHECK WITH OLS_STEP MODEL SINCE WE ARE USING THIS STEPWISE REGRESSION
+
 
 ```{r}
 
