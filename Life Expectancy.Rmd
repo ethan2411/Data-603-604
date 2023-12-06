@@ -56,7 +56,7 @@ head(developing_LE)
 ### Building our first/initial model and doing a full F test.
 
 ```{r}
-
+options(scipen = 999)
 #make first model
 develop_firstlm = lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
 summary(develop_firstlm)
