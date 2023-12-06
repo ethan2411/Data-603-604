@@ -121,6 +121,7 @@ developing_intred2 = lm(Life.expectancy ~ HIV.AIDS + Hepatitis.B + BMI + Alcohol
 #ggpairs(developing_intred2)
 ```
 
+<<<<<<< HEAD
 We see that there seems to be some sort of curved relationship with our response variable (life expectancy) and the predictor varialbe HIV.AIDS. So we now will add a quadratic power to our model and see if the higher power is accepted from the partial F-test
 
 
@@ -128,6 +129,12 @@ We see that there seems to be some sort of curved relationship with our response
 
 ```{r}
 developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
+=======
+### HIGHER ORDER OF OUR OLS() STEPMODEL FINAL MODEL
+
+```{r}
+developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
+>>>>>>> 0ae5c7f96f25478b7d74ebd15a948aff93d1532f
 
 summary(developing_highermod)
 #ANOVA TO TEST IF HIGHER ORDER MODEL IS ACCEPTED. IT IS ACCEPTED
@@ -145,13 +152,18 @@ We see that adding the quadratic power into the model for HIV.AIDS increases the
 summary(developing_highermod)
 #equal variacne assumption
 bptest(developing_highermod)
+<<<<<<< HEAD
 #normality assumption
 shapiro.test(developing_highermod$residuals)
 #plots to show linearity, equal variance, normality and outlier assumptions
+=======
+shapiro.test(residuals(developing_highermod))
+>>>>>>> 0ae5c7f96f25478b7d74ebd15a948aff93d1532f
 plot(developing_highermod)
 
 ```
 
+<<<<<<< HEAD
 
 ```{r}
 #more plots to show the outlier assumption
@@ -224,6 +236,9 @@ combined_plot
 
 
 Since we do not meet the assumption of equal variance, we will do a boxcox transformation to see if it helps meet the assumption. 
+=======
+### FROM ASSUMPTION CHECKS WE DO BOXCOX
+>>>>>>> 0ae5c7f96f25478b7d74ebd15a948aff93d1532f
 
 ```{r}
 bc = boxcox(developing_highermod, lambda=seq(-1,1))
