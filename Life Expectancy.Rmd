@@ -129,12 +129,6 @@ We see that there seems to be some sort of curved relationship with our response
 
 ```{r}
 developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
-=======
-### HIGHER ORDER OF OUR OLS() STEPMODEL FINAL MODEL
-
-```{r}
-developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + I(HIV.AIDS^3) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
->>>>>>> 0ae5c7f96f25478b7d74ebd15a948aff93d1532f
 
 summary(developing_highermod)
 #ANOVA TO TEST IF HIGHER ORDER MODEL IS ACCEPTED. IT IS ACCEPTED
@@ -150,20 +144,16 @@ We see that adding the quadratic power into the model for HIV.AIDS increases the
 
 #CHECK ASSUMPTIONS OF OUR FINAL MODEL
 summary(developing_highermod)
-#equal variacne assumption
+#equal variance assumption
 bptest(developing_highermod)
-<<<<<<< HEAD
+
 #normality assumption
-shapiro.test(developing_highermod$residuals)
-#plots to show linearity, equal variance, normality and outlier assumptions
-=======
 shapiro.test(residuals(developing_highermod))
->>>>>>> 0ae5c7f96f25478b7d74ebd15a948aff93d1532f
+#plots to show linearity, equal variance, normality and outlier assumptions
 plot(developing_highermod)
 
 ```
 
-<<<<<<< HEAD
 
 ```{r}
 #more plots to show the outlier assumption
@@ -207,6 +197,7 @@ ggplot(data.frame(hat_values = hatvalues(developing_highermod), std_resid = rsta
        x = "Leverage",
        y = "Standardized Residuals")
 ```
+
 
 ```{r}
 library(patchwork)
@@ -345,8 +336,7 @@ lev=hatvalues(developing_highermod)
 p = length(coef(developing_highermod))
 n = nrow(developing_LE)
 outlier2p = lev[lev>(2*p/n)]
-outlier3p = lev[lev>(3*p/n)]
-print("h_I>3p/n, outliers are")
+print("h_I>2p/n, outliers are")
 print(outlier2p)
 
 rows_remove2p = which(lev>(2*p/n))
@@ -377,9 +367,6 @@ summary(intred2plm$model)
 
 ```
 
-WHOA WHOA WHOA STOP HERE DO NOT DO THE 2P MODEL. IT REMOVES A PREDICTOR VARIABLE (MEASLES) WITHOUT REMOVING ITS INTERACTION TERMS. I AM NOT DEALING WITH THAT F THAT.
-
-CAN JUST SAY THAT AFTER CHECKING ASSUMPTIONS FROM THE MODEL WITH OUTLIERS REMOVED OVER THE 3P LEVEL WE DIDNT DO ANY LOWER BECAUSE WE FOUND THAT IT JUST CREATED EVEN WORSE OUTLIERS PRESENT FOR ITS MODEL. SO WE STOPPED THERE AND DIDNT DROP MORE OUTLIERS.
 
 ### MAKE HIGHER ORDER 2P MODEL
 
