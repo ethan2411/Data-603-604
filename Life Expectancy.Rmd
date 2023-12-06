@@ -77,7 +77,7 @@ We see from vif that they are all below 5 so we do not have any multicollinearit
 
 ##Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
 
-Looking at individual t-test p-valeus for our initial model above, we see that the p-value for measles is 0.4875. So we fail to reject the null hypothesis and from this we can infer that the variable Measles is not related to the response variable and so can be dropped from the model
+Looking at individual t-test p-values for our initial model above, we see that the p-value for measles is 0.4875. So we fail to reject the null hypothesis and from this we can infer that the variable Measles is not related to the response variable and so can be dropped from the model
 
 We build the reduced model and check to see if we need to drop any other variables.
 ```{r}
@@ -89,7 +89,7 @@ summary(develop_lmred)
 anova(develop_firstlm,develop_lmred)
 ```
 
-We see that all our p-valeus are less than 0.05, so no mroe variables need to be dropped from the model. The partial f-test p-value is also 0.4875. From this we can infer that the reduced model is accepted. 
+We see that all our p-values are less than 0.05, so no more variables need to be dropped from the model. The partial f-test p-value is also 0.4875. From this we can infer that the reduced model is accepted. 
 
 ## Adding interactions to the model and using partial F-test to confirm the interaction model is significant
 
@@ -121,8 +121,8 @@ developing_intred2 = lm(Life.expectancy ~ HIV.AIDS + Hepatitis.B + BMI + Alcohol
 #ggpairs(developing_intred2)
 ```
 
-<<<<<<< HEAD
-We see that there seems to be some sort of curved relationship with our response variable (life expectancy) and the predictor varialbe HIV.AIDS. So we now will add a quadratic power to our model and see if the higher power is accepted from the partial F-test
+
+We see that there seems to be some sort of curved relationship with our response variable (life expectancy) and the predictor variable HIV.AIDS. So we now will add a quadratic power to our model and see if the higher power is accepted from the partial F-test
 
 
 ###Adding higher powers and using partial F-test to confirm the higher power model is significant
