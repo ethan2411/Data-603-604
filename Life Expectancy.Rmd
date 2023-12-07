@@ -229,10 +229,9 @@ combined_plot
 Since we do not meet the assumption of equal variance, we will do a boxcox transformation to see if it helps meet the assumption. 
 =======
 ### FROM ASSUMPTION CHECKS WE DO BOXCOX
->>>>>>> 0ae5c7f96f25478b7d74ebd15a948aff93d1532f
 
 ```{r}
-bc = boxcox(developing_highermod, lambda=seq(-1,1))
+bc = boxcox(developing_highermod, lambda=seq(-2,2))
 
 bestlambda = bc$x[which(bc$y==max(bc$y))]
 bestlambda
@@ -241,6 +240,31 @@ bestlambda
 ```
 
 We see from the boxcox transformation that the lambda value it gave us is 1. This tells us that the model does not need any transformations placed upon the response variable. So because of this we do no further steps from the boxcox transformation.
+
+
+```{r}
+
+bcmodel = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
+summary(bcmodel)
+
+bcmodelred = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~  Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
+summary(bcmodelred)
+
+bcmodelint = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~  (Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE)
+
+stepbcmodel = ols_step_both
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 Since we noticed there were outliers with leverage values over 3p/n, we removed these outliers and rebuilt the model in the same order that we built our initial model from above. We then checked the assumptions for this model to compare with the other model. 
