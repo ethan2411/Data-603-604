@@ -22,8 +22,6 @@ This file contains all of our R code for the project. It contains our model buil
 
 10. Choosing the best final model within the scope of this course
 
-11. Interpreting beta coefficients
-
 First we loaded in our dataset, removed na values and filtered for only rows that were considered "developing" countries based off of the column Status (states if a row is a devoloped or non-developed country). We filtered for these rows since our project only focuses on developing countries. We also loaded in any libraries we planned on using.
 
 ```{r}
