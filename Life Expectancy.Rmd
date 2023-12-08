@@ -4,27 +4,25 @@ This file contains all of our R code for the project. It contains our model buil
 
 1.  Building our first/initial model and doing a full F test.
 
-2.  Checking for multicollinearity and removing variables which have a VIF > 5
+2.  Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
 
-3.  Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
+3.  Adding interactions to the model and using partial F-test to confirm the interaction model is significant
 
-4.  Adding interactions to the model and using partial F-test to confirm the interaction model is significant
+4.  Reducing the interaction model via stepwise selection
 
-5.  Reducing the interaction model via stepwise selection
+5.  Checking plots between response variable and predictor variables to determine if higher powers need to be present
 
-6.  Checking plots between response variable and predictor variables to determine if higher powers need to be present
+6.  Adding higher powers and using partial F-test to confirm the higher power model is significant
 
-7.  Adding higher powers and using partial F-test to confirm the higher power model is significant
+7.  Checking the assumptions of the final model (linearity, normality, equal variance, multicollinearity and outliers)
 
-8.  Checking the assumptions of the final model
+8.  Doing various techniques if the model does not meet assumptions (boxcox transformation and removal of outliers)
 
-9.  Doing various techniques if the model does not meet assumptions (boxcox transformation and removal of outliers)
+9. rebuilding the models from the techniques done above and check if the new model meets assumptions better vs the other model.
 
-10. rebuilding the models from the techniques done above and check if the new model meets assumptions better vs the other model.
+10. Choosing the best final model within the scope of this course
 
-11. Choosing the best final model within the scope of this course
-
-12. Interpreting beta coefficients
+11. Interpreting beta coefficients
 
 First we loaded in our dataset, removed na values and filtered for only rows that were considered "developing" countries based off of the column Status (states if a row is a devoloped or non-developed country). We filtered for these rows since our project only focuses on developing countries. We also loaded in any libraries we planned on using.
 
@@ -62,18 +60,7 @@ develop_firstlm = lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI +
 summary(develop_firstlm)
 ```
 
-This is our first initial model above. You can also see form the full f test the p-value is <2.2e-16 meaning that at least one of the predictor variables is related to the response variable. 
-
-
-##Checking for multicollinearity and removing variables which have a VIF > 5
-
-```{r}
-#check vif for multicolinnearity to see if we need to drop any variables
-vif(develop_firstlm)
-#we dont need to drop any so we now reduce model
-```
-We see from vif that they are all below 5 so we do not have any multicollinearity in our model and so none of the variables need to be removed. 
-
+This is our first initial model above. You can also see from the full f test the p-value is <2.2e-16 meaning that at least one of the predictor variables is related to the response variable. 
 
 ##Reducing the model using the individual t-test. Use partial F-test to confirm the reduced model is significant
 
@@ -89,19 +76,22 @@ summary(develop_lmred)
 anova(develop_firstlm,develop_lmred)
 ```
 
-We see that all our p-values are less than 0.05, so no more variables need to be dropped from the model. The partial f-test p-value is also 0.4875. From this we can infer that the reduced model is accepted. 
+We see that all our p-values are less than 0.05, so no more variables need to be dropped from the model. The partial f-test p-value is also 0.4875. From this we can infer that the reduced model is accepted (further confirming measles can be dropped). 
 
 ## Adding interactions to the model and using partial F-test to confirm the interaction model is significant
-
-### OLS STEP MODEL
 
 ```{r}
 #make full interaction model
 develop_lmintfull = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE)
 summary(develop_lmintfull)
+
+#run anova to see if full interaction model is accepted
+anova(develop_lmintfull, develop_lmred)
 ```
 
+From the anova partial f-test we see a p-value < 0.05 so we can reject the null hypothesis. From this we can infer that the full interaction model is the preferred/accepted model. 
 
+##Reducing the interaction model via stepwise selection
 
 ```{r}
 
@@ -118,7 +108,7 @@ summary(develop_stepmod_intred$model)
 developing_intred2 = lm(Life.expectancy ~ HIV.AIDS + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
 
 #look for graphs to see if higher order models are required
-#ggpairs(developing_intred2)
+ggpairs(developing_intred2)
 ```
 
 
@@ -133,9 +123,18 @@ developing_highermod = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis
 summary(developing_highermod)
 #ANOVA TO TEST IF HIGHER ORDER MODEL IS ACCEPTED. IT IS ACCEPTED
 anova(developing_highermod, developing_intred2)
+
+#check R sq adj and RMSE of our fitted model
+summary(developing_highermod)$adj.r.squared
+sigma(developing_highermod)
 ```
 
-We see that adding the quadratic power into the model for HIV.AIDS increases the models R squared value from 0.6259 to 0.6796. The partial f-test also accepts the higher order model. For these reasons we have decided to keep the higher order term in our model. We also decided to keep it in our model since we noticed it helps with our linearity assumption (which you will see below). Now we have our final model, now we check the assumptions of the model. 
+We see that adding the quadratic power into the model for HIV.AIDS increases the models R squared value from 0.6259 to 0.6796. The partial f-test also accepts the higher order model (since p-value is < 0.05). For these reasons we have decided to keep the higher order term in our model. We also decided to keep it in our model since we noticed it helps with our linearity assumption (which you will see below). Now we have our final model, now we check the assumptions of the model. 
+
+Our final model is:
+
+
+We also see the R squared adjusted value for our final fitted model is 0.6795512 and the RMSE is 4.729039
 
 
 ###Checking the assumptions of the final model
@@ -144,16 +143,27 @@ We see that adding the quadratic power into the model for HIV.AIDS increases the
 
 #CHECK ASSUMPTIONS OF OUR FINAL MODEL
 summary(developing_highermod)
+
 #equal variance assumption
 bptest(developing_highermod)
 
 #normality assumption
 shapiro.test(residuals(developing_highermod))
+
 #plots to show linearity, equal variance, normality and outlier assumptions
 plot(developing_highermod)
 
 ```
 
+
+
+```{r}
+#check vif for multicolinnearity to see if we need to drop any variables with VIF > 5
+vif(develop_firstlm)
+vif(develop_lmred)
+
+```
+We see from vif that they are all below 5 so we do not have any multicollinearity in our model and so none of the variables need to be removed. (Included the full additive model and reduced additive model (without measles) for vif tests and see there is still no difference (none greater than 5))
 
 ```{r}
 #more plots to show the outlier assumption
@@ -222,11 +232,31 @@ combined_plot <- qq_plot + hist_plot
 combined_plot
 ```
 
+For the linearity assumption, we notice for the residuals vs fitted values plot that there seems to be some sort of non linear pattern occuring. So from this we say the linearity assumption does not hold.
+
+For the normality assumption, we notice from the QQ plot that the tail ends flare out quite alot possibly hinting towards heteroscedasticity. We also see from the histogram  a generally normal pattern however there is some data points near the left tail suggesting the distribution may not be normal. We also ran the shapiro wilk test with the hypothesis:
+
+$H_0$: The Residuals are Normally Distributed
+$H_a$: The Residuals are not Normally Distributed
+
+The p-value from the shapiro wilk test was 0.000000002244. Since 0.000000002244 < 0.05, we reject the null hypothesis. So we can infer from this that the residuals are not normally distributed. So the normality assumption does not hold.
+
+For the equal variance assumption, we notice from the residuals vs fitted plot that there is some funneling present (narrower on the left side vs wider as you move to the right) which shows that heteroscedasticity may be present. WE also ran the breusch pagan test with the hypothesis: 
+
+$H_0$: Heteroscedascity is not present
+$H_a$: Heteroscedascity is present
+
+The p-value from the bp test was 0.00000000000000022. Since 0.00000000000000022 < 0.05, we reject the null hypothesis. So we can infer from this that their is heteroscedasticity present. So the equal variance assumption does not hold. 
+
+For the multicollinearity assumption, we used the VIF function and found that no variables were over a VIF of 5, so we do not need to remove any variables from the model. So the multicollinearity assumption holds. 
+
+For the outliers, from the residuals vs leverage plot we notice no outliers with a high cooks distance. For the cooks distance plot, we notice 3 points that stand out, however they still have an incredibly small cooks distance (around 0.04). From the leverage in dataset plot, we do notice points over a leverage of 3p/n and 2p/n, these will be addressed later when we look for ways to make our model meet the normality, linearity and equal variance assumption. Overall we see that there are no influential outliers with a high cooks distance. 
+
 
 ### Doing various techniques if the model does not meet assumptions (boxcox transformation and removal of outliers)
 
 
-Since we do not meet the assumption of equal variance, we will do a boxcox transformation to see if it helps meet the assumption. 
+Since we do not meet the assumption of equal variance, normality and linearity, we will do a boxcox transformation to see if it helps meet the assumption. 
 =======
 ### FROM ASSUMPTION CHECKS WE DO BOXCOX
 
@@ -235,39 +265,33 @@ bc = boxcox(developing_highermod, lambda=seq(-2,2))
 
 bestlambda = bc$x[which(bc$y==max(bc$y))]
 bestlambda
-
-
 ```
 
-We see from the boxcox transformation that the lambda value it gave us is 1. This tells us that the model does not need any transformations placed upon the response variable. So because of this we do no further steps from the boxcox transformation.
-
+We see from the boxcox transformation that the lambda value it gave us is 1.151515. When rounding to the nearest value it tells us that the model doesnt need any transformations done, we however did use the lambda value of 1.151515 to test if this transformation will fix our assumptions
 
 ```{r}
+bcmodel = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
 
-bcmodel = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
+#check r squared adjusted value of boxcox model
 summary(bcmodel)
 
-bcmodelred = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~  Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE)
-summary(bcmodelred)
+#check assumptions of model 
+plot(bcmodel)
 
-bcmodelint = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~  (Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE)
+#normality test
+shapiro.test(residuals(bcmodel))
 
-stepbcmodel = ols_step_both
+#equal variance test
+bptest(bcmodel)
 ```
 
+From the new model with the boxcox transformation of 1.151515 we notice the model has a worse R squared adjusted value of 0.6758 compared to the original fitted model. We also notice from the residuals vs fitted plot and the breusch pagan test that the assumption of equal variance still does not hold (since the null hypothesis is rejected). We also notice from the QQ plot no difference comapred to the original QQ plot showing no change in normality. Furthermore, we see from the shapiro test that the assumption of normality still does not hold (since the null hypothesis is rejected). 
+
+So overall the boxcox transformation model did not help us meet our assumptions and is a worse model compared to our original fitted model. 
 
 
 
-
-
-
-
-
-
-
-
-
-Since we noticed there were outliers with leverage values over 3p/n, we removed these outliers and rebuilt the model in the same order that we built our initial model from above. We then checked the assumptions for this model to compare with the other model. 
+Since we also noticed there were points with leverage values over 3p/n, we removed these points and refit the model to see if any improvements occurred for our assumptions.  
 ```{r}
 
 lev=hatvalues(developing_highermod)
@@ -288,74 +312,25 @@ nrow(developing_LE_no_outliersSTEP)
 ```
 
 ```{r}
-#make initial model without 3p/n outliers
-first3plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
-summary(first3plm)
+model3pgone = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE_no_outliersSTEP)
+summary(model3pgone)
 
-#reduced model
-red3plm = lm(Life.expectancy ~  Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
-summary(red3plm)
-
-#anova accepts the reduced model
-anova(first3plm, red3plm)
-
-#int model
-int3plm = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE_no_outliersSTEP)
-summary(int3plm)
-
-#anova accepts the interaction model
-anova(int3plm, red3plm)
-
-intred3plm = ols_step_both_p(int3plm, pent = 0.1, prem = 0.3, details = FALSE)
-summary(intred3plm$model)
-
-
+#looking at plots for assumptions
+plot(model3pgone)
+#looking at normality assumption
+shapiro.test(residuals(model3pgone))
+#looking at equal variance assumption
+bptest(model3pgone)
 ```
 
+From the fitted model without 3p/n outliers, we notice this model has a worse R squared adjusted value of 0.6628 compared to the original fitted model. From looking at the residuals vs fitted plot we also see that there is still a non-linear pattern present. We also notice from the residuals vs fitted plot and the breusch pagan test conducted that there is still heteroscedasticity present (since the null hypothesis is rejected) so the assumption of equal variance still does not hold. We also notice no improvement in the QQ plot for tailing of the residuals. Furthermore we see from the shapiro test conducted that the assumption of normality still does not hold (since the null hypothesis is rejected). Another interesting thing to note as well is that when looking at the residuals vs leverage plot, we see that there are points that have a higher leverage now comapred to the original fitted model. One point (1403) is even reaching close to a cooks distance of 0.5, showing it is almost influential.
+
+So overall, the removal of 3p/n outliers did not help us meet our assumptions better and it also made the outliers present in its model worse. 
+
+
+Next we attempt the same model refitting but this time with the removal of outliers with a leverage above 2p/n
 ```{r}
-
-#MAKING REDUCED INT MODEL AFTER STEPWISE
-step_red_3p = lm(Life.expectancy ~  HIV.AIDS + Hepatitis.B + Polio + Diphtheria + Alcohol + BMI + BMI:Diphtheria + Diphtheria:Polio + Hepatitis.B:Alcohol + Diphtheria:Alcohol + BMI:Hepatitis.B + BMI:Polio + HIV.AIDS:Polio + Diphtheria:Hepatitis.B, data = developing_LE_no_outliersSTEP)
-
-
-
-#CHECK GGPAIRS TO SEE IF WE ADD HIGHER ORDER TO MODEL
-#ggpairs(step_red_3p)
-
-#LOOKS LIKE WE DO IT FOR HIV
-#make higher order model
-higher3plm = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + Polio + Diphtheria + Alcohol + BMI + BMI:Diphtheria + Diphtheria:Polio + Hepatitis.B:Alcohol + Diphtheria:Alcohol + BMI:Hepatitis.B + BMI:Polio + HIV.AIDS:Polio + Diphtheria:Hepatitis.B, data = developing_LE_no_outliersSTEP)
-#stopped at 2. Dont want to create an overfitted model.
-
-
-#anova accepts higher order model
-anova(higher3plm,step_red_3p)
-```
-
-
-Check assumptions of the final model without 3p/n outliers
-```{r}
-#quick check of assumptions for model without 3p/n outliers
-summary(higher3plm)
-
-#equal variance assumption
-bptest(higher3plm)
-
-#normality assumption
-shapiro.test(residuals(higher3plm))
-
-#check linearity, equal variance, normality and outlier assumptions via plots
-plot(higher3plm)
-
-```
-
-### NOW WE ATTEMPT WITH taking out all outliers with leverage above 2p/n from original model TO SEE IF ITS BETTER
-
-NOTE: We kept this section in our documents to show that we attempted a few different ways to help try to meet our model assumptions. However in the end we decided to not compare assumptions with the model without 2p/n outliers. This decision was made because when we looked at the outlier plots for the model without 3p/n outliers we noticed that it was actually creating outliers with higher leverage values than what was previously observed from the original fitted model (model that had no outliers removed). You can see from the model without 3p/n outliers that its residuals vs leverage plot has outliers quite close to cook distance line of 0.5 From this, we were worried that the model without 2p/n outliers would do the same but make the outliers even worse (we were right as seen on its residuals vs leverage plot below sicne there are now influential outliers). We did not want to go down a rabbit hole and constantly have to remove more and more outliers from models, which would cause overfitting in the end. This is what ultimately led to our decision to stop at the model without 3p/n outliers. 
-
-
-
-```{r}
+#removing 2p/n outliers and making a new DF without them
 lev=hatvalues(developing_highermod)
 p = length(coef(developing_highermod))
 n = nrow(developing_LE)
@@ -373,46 +348,128 @@ nrow(developing_LE)
 nrow(developing_LE_no_outliersSTEP2P)
 ```
 
-2P FIRST MODEL
+
 
 ```{r}
-first2plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
-summary(first2plm)
-#everything signficiant, so no reductions. make int model next
+#fitting the previous model with the new data that had outliers
+model2pgone = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE_no_outliersSTEP2P)
+summary(model2pgone)
 
-#int model
-int2plm = lm(Life.expectancy ~  (Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE_no_outliersSTEP2P)
-summary(int2plm)
-
-#reduced int model via stepwise
-intred2plm = ols_step_both_p(int2plm, pent = 0.1, prem = 0.3, details = FALSE)
-summary(intred2plm$model)
+#looking at plots for assumptions
+plot(model2pgone)
+#looking at normality assumption
+shapiro.test(residuals(model2pgone))
+#looking at equal variance assumption
+bptest(model2pgone)
 
 
 ```
+From the fitted model without 2p/n outliers, we notice this model has a worse R squared adjusted value of 0.6537 compared to the original fitted model. From looking at the residuals vs fitted plot we also see that there is still a non-linear pattern present. We also notice from the residuals vs fitted plot and the breusch pagan test conducted that there is still heteroscedasticity present (since the null hypothesis is rejected) so the assumption of equal variance still does not hold. We also notice no improvement in the QQ plot for tailing of the residuals (if anything, the tailing of the residuals is worse in this QQ plot). Furthermore we see from the shapiro test conducted that the assumption of normality still does not hold (since the null hypothesis is rejected). Another interesting thing to note as well is that when looking at the residuals vs leverage plot, we see that there is a point (1402) that is influential since it has a cooks distance greater than 1, so it made the outliers present worse compared to the original fitted model. 
 
 
-### MAKE HIGHER ORDER 2P MODEL
+So overall, even after attempting to make the model better fit to possibly meet the assumptions we were unable to do so in the scope of DATA 603. SO the best fit model that we are sticking with is the original fitted model which is: 
 
+YLife Expectancy   =  56.0141191 + 0.7211983XAlcohol - 0.0057522XHepatitisB + 0.2779569XBMI + 0.0297612XPolio + 0.0119486XDiphtheria - 1.3219465XHIV.AIDS + 0.0242920X2 HIV.AIDS + 0.0004922Xpolio:Diphtheria - 0.0018225XBMI:Polio - 0.0080679XHepatitisB:Alcohol + 0.0026948XHIV.AIDS:Alcohol + 0.0025360XDiphtheria:Alcohol + 0.0003109XHepatitisB:Polio - 0.0028802XHIV.AIDS:Diphtheria
+
+and its Adjusted R squared value is:0.6796
+
+and its RMSE value is: 4.729
+
+Note: all interpretations are in our final report and will not be here
+
+
+
+
+
+
+Below here we have extra code that we wanted to keep in if you were curious about some of the other stuff that we did that we did not include in our report. It is all commented out so that it does not get ran. This code includes the rebuilding of our model entirely for the the model without 3p/n outliers and the model without 2p/n outliers. We found that even attempting it this way that we still did not find better fit models because their assumptions were just as bad or worse (made outliers present with higher leverage and cooks distance).
 ```{r}
 
+#we also made the model without outliers from scratch and checked the assumptions but they were not better at all and stil worse than the original fitted model. wE have kept this code here but it is commented out since we did not use it.
+
+
+#make initial model without 3p/n outliers
+
+
+#first3plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
+#summary(first3plm)
+
+#reduced model
+#red3plm = lm(Life.expectancy ~  Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP)
+#summary(red3plm)
+
+#anova accepts the reduced model
+#anova(first3plm, red3plm)
+
+#int model
+#int3plm = lm(Life.expectancy ~  (Alcohol + Hepatitis.B + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE_no_outliersSTEP)
+#summary(int3plm)
+
+#anova accepts the interaction model
+#anova(int3plm, red3plm)
+
+#intred3plm = ols_step_both_p(int3plm, pent = 0.1, prem = 0.3, details = FALSE)
+#summary(intred3plm$model)
+
+#MAKING REDUCED INT MODEL AFTER STEPWISE
+#step_red_3p = lm(Life.expectancy ~  HIV.AIDS + Hepatitis.B + Polio + Diphtheria + Alcohol + BMI + BMI:Diphtheria + Diphtheria:Polio + Hepatitis.B:Alcohol + #Diphtheria:Alcohol + BMI:Hepatitis.B + BMI:Polio + HIV.AIDS:Polio + Diphtheria:Hepatitis.B, data = developing_LE_no_outliersSTEP)
+
+
+#CHECK GGPAIRS TO SEE IF WE ADD HIGHER ORDER TO MODEL
+#ggpairs(step_red_3p)
+
+#LOOKS LIKE WE DO IT FOR HIV
+#make higher order model
+#higher3plm = lm(Life.expectancy ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + Polio + Diphtheria + Alcohol + BMI + BMI:Diphtheria + Diphtheria:Polio + #Hepatitis.B:Alcohol + Diphtheria:Alcohol + BMI:Hepatitis.B + BMI:Polio + HIV.AIDS:Polio + Diphtheria:Hepatitis.B, data = developing_LE_no_outliersSTEP)
+#stopped at 2. Dont want to create an overfitted model.
+
+
+#anova accepts higher order model
+#anova(higher3plm,step_red_3p)
+
+#quick check of assumptions for model without 3p/n outliers
+#summary(higher3plm)
+
+#equal variance assumption
+#bptest(higher3plm)
+
+#normality assumption
+#shapiro.test(residuals(higher3plm))
+
+#check linearity, equal variance, normality and outlier assumptions via plots
+#plot(higher3plm)
+
+
+
+
+#building initial model with new dataset without 2p outliers
+
+
+#first2plm= lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
+#summary(first2plm)
+#everything signficiant, so no reductions. make int model next
+
+#int model
+#int2plm = lm(Life.expectancy ~  (Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS)^2, data = developing_LE_no_outliersSTEP2P)
+#summary(int2plm)
+
+#reduced int model via stepwise
+#intred2plm = ols_step_both_p(int2plm, pent = 0.1, prem = 0.3, details = FALSE)
+#summary(intred2plm$model)
+
+
 #MAKE NEW MODEL HERE AFTER DOING STEPWISE OLS
-step_red_2p = lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
+#step_red_2p = lm(Life.expectancy ~  Alcohol + Hepatitis.B  + Measles + BMI + Polio + Diphtheria + HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
 
 
 #ggpairs(intred2plm)
 #make higher order model
-higher2plm = lm(Life.expectancy ~ Alcohol + Hepatitis.B + Measles + BMI + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + Alcohol:Hepatitis.B + Alcohol:Measles + Alcohol:BMI + Alcohol:Diphtheria + Alcohol:HIV.AIDS + Hepatitis.B:Diphtheria + Measles:Diphtheria + Measles:HIV.AIDS + BMI:Diphtheria + Diphtheria:HIV.AIDS, data = developing_LE_no_outliersSTEP2P)
+#higher2plm = lm(Life.expectancy ~ Alcohol + Hepatitis.B + Measles + BMI + Diphtheria + HIV.AIDS + I(HIV.AIDS^2) + Alcohol:Hepatitis.B + Alcohol:Measles + #Alcohol:BMI + Alcohol:Diphtheria + Alcohol:HIV.AIDS + Hepatitis.B:Diphtheria + Measles:Diphtheria + Measles:HIV.AIDS + BMI:Diphtheria + Diphtheria:HIV.AIDS, #data = developing_LE_no_outliersSTEP2P)
 
-summary(higher2plm)
-bptest(higher2plm)
-plot(higher2plm)
+#summary(higher2plm)
+#bptest(higher2plm)
+#plot(higher2plm)
 
-shapiro.test(residuals(higher2plm))
-
-#boxcox
-bc = boxcox(higher2plm,lambda=seq(-1,1))
-bestlambda=bc$x[which(bc$y==max(bc$y))]
-bestlambda
+#shapiro.test(residuals(higher2plm))
 
 ```
