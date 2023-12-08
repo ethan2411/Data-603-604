@@ -270,7 +270,7 @@ We see from the boxcox transformation that the lambda value it gave us is 1.1515
 ```{r}
 bcmodel = lm((((Life.expectancy^bestlambda)-1)/bestlambda) ~ HIV.AIDS + I(HIV.AIDS^2) + Hepatitis.B + BMI + Alcohol + Polio + Diphtheria + Polio:Diphtheria +BMI:Polio + Hepatitis.B:Alcohol + HIV.AIDS:Alcohol + Diphtheria:Alcohol +  Hepatitis.B:Polio + HIV.AIDS:Diphtheria, data = developing_LE)
 
-#check r squared adjusted value of boxcox model
+#check r squared adjusted value and RMSE of boxcox model
 summary(bcmodel)
 
 #check assumptions of model 
